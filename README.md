@@ -1,10 +1,10 @@
 ## POEditor Downloader
-CLI tool for automatic updating translations in flutter projects from [POEditor](https://poeditor.com/).
+CLI tool for simple way of updating translations in flutter projects from [POEditor](https://poeditor.com/).
 
 ---
 ### How to use
 ```sh
-dart dart run po_editor_downloader --api_token=key --project_id=id
+dart run po_editor_downloader --api_token=key --project_id=id
 ```
 
 ### Parameters 
