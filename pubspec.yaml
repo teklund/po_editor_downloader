@@ -1,0 +1,15 @@
+name: po_editor_downloader
+description: Simple CLI for getting translations from POEditor.
+version: 0.2.0
+homepage: https://github.com/teklund/po_editor_downloader
+
+environment:
+  sdk: ^3.1.5
+
+dependencies:
+
+  http: ^1.1.0
+  args: ^2.4.2
+
+dev_dependencies:
+  lints: ^5.0.0
