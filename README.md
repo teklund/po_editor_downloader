@@ -1,5 +1,11 @@
 ## POEditor Downloader
-CLI tool for simple way of updating translations in flutter projects from [POEditor](https://poeditor.com/).
+CLI tool for a simple way of updating translations in Flutter projects from [POEditor](https://poeditor.com/).
+
+---
+### How to install
+```sh
+flutter pub add dev:po_editor_downloader
+```
 
 ---
 ### How to use
