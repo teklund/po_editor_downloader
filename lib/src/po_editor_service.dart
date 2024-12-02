@@ -1,16 +1,26 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:po_editor_downloader/language.dart';
+import 'package:po_editor_downloader/src/language.dart';
 
+/// Base url for POEditor
 const baseUrl = 'https://api.poeditor.com/v2';
 
+/// Service for retrieving data from POEditor
 class PoEditorService {
+  /// Api Token to get access to POEditor
   final String apiToken;
+
+  /// Project Id of target project in POEditor
   final String projectId;
+
+  /// (optional) Tags to filter terms
   final String? tags;
+
+  /// (optional) Filters for terms
   final String? filters;
 
+  /// Construct POEditor Service
   const PoEditorService({
     required this.apiToken,
     required this.projectId,
@@ -18,6 +28,7 @@ class PoEditorService {
     required this.filters,
   });
 
+  /// Get Languages for project
   Future<List<Language>> getLanguages() async {
     final response = await http.post(
       Uri.parse('$baseUrl/languages/list'),
@@ -34,6 +45,7 @@ class PoEditorService {
     }
   }
 
+  /// Get translations for language
   Future<Map<String, dynamic>> getTranslations(Language language) async {
     final response = await http.post(
       Uri.parse('$baseUrl/projects/export'),

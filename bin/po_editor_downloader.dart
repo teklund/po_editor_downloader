@@ -2,9 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:po_editor_downloader/arguments_parser.dart';
-import 'package:po_editor_downloader/po_editor_service.dart';
-import 'package:po_editor_downloader/re_case.dart';
+import 'package:po_editor_downloader/po_editor_downloader.dart';
 
 const apiTokenOption = 'api_token';
 const projectIdOption = 'project_id';
@@ -23,22 +21,24 @@ Future<void> main(List<String> arguments) async {
 
   final result = parser.parse(arguments);
 
-  final apiKey = parseArguments(apiTokenOption, result.arguments);
-  final projectId = parseArguments(projectIdOption, result.arguments);
+  final apiKey = ArgumentValueParser.parse(apiTokenOption, result.arguments);
+  final projectId =
+      ArgumentValueParser.parse(projectIdOption, result.arguments);
 
   if (apiKey == null || projectId == null) {
-    throw Exception('Please provide an API token with project ID "api_token" and "project_id"');
+    throw Exception(
+        'Please provide an API token with project ID "api_token" and "project_id"');
   }
-  var filesPath = parseArguments(filesPathOption, result.arguments);
+  var filesPath = ArgumentValueParser.parse(filesPathOption, result.arguments);
 
   if (filesPath == null) {
     print('No "files_path" specified, will default to $defaultFilesPath');
     filesPath = defaultFilesPath;
   }
 
-  final tags = parseArguments(tagsOption, result.arguments);
+  final tags = ArgumentValueParser.parse(tagsOption, result.arguments);
 
-  final filters = parseArguments(filtersOption, result.arguments);
+  final filters = ArgumentValueParser.parse(filtersOption, result.arguments);
 
   final service = PoEditorService(
     apiToken: apiKey,
