@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.4.0
+## 1.0.0
 
 ### New Features
 
@@ -36,15 +36,10 @@ All notable changes to this project will be documented in this file.
 
 ### Improvements
 
-- Lower Dart SDK requirement to `^3.0.0` for broader compatibility
 - All CLI arguments are now optional when using YAML configuration
 - Security warning if API token is found in YAML files (use environment variable instead)
 
 **Breaking Changes:** None - fully backward compatible with existing CLI usage
-
-## 0.3.1
-
-- chore: Bump minimum Dart SDK version to ^3.9.0
 
 ## 0.3.0
 

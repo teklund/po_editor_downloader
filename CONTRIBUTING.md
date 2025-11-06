@@ -21,7 +21,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Prerequisites
 
-- [Dart SDK](https://dart.dev/get-dart) ^3.0.0 or higher
+- [Dart SDK](https://dart.dev/get-dart) ^3.4.0 or higher
 - [Flutter](https://flutter.dev/docs/get-started/install) (if testing with Flutter projects)
 - Git
 
