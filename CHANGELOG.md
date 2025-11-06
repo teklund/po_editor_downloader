@@ -2,77 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.5.0
-
-- refactor: Remove redundant `ArgumentValueParser` class (use `ArgParser` directly)
-- refactor: Extract `downloadTranslations()` and `writeArbFile()` functions from main
-- refactor: Simplify main() function to orchestrate workflow only
-- feat: Add retry logic with exponential backoff for API calls
-- feat: Retry on transient failures (5xx errors, network errors)
-- feat: Skip retry on client errors (4xx errors)
-- feat: Add `onRetry` callback for monitoring retry attempts
-- test: Add 13 new tests for retry logic (144 total)
-- refactor: Improve error handling with specific exception catches
-- refactor: Use `ArgResult` subscript operator instead of custom parser
-
-**Breaking Changes:** None - fully backward compatible
-
-**Internal Improvements:**
-- Main function reduced from 60+ lines to ~15 lines
-- Better separation of concerns
-- More testable architecture
-- Removed 8 redundant ArgumentValueParser tests
-
-## 0.4.1
-
-- feat: Add HTTP client injection to `PoEditorService` for better testability
-- feat: Add custom exception classes (`PoEditorApiException`, `PoEditorNetworkException`) with detailed error information
-- feat: Add automatic output directory creation and validation
-- feat: Add directory writability checks before downloading
-- fix: Lower Dart SDK constraint to `^3.0.0` for broader compatibility
-- test: Add 30 new tests for HTTP client injection, error handling, and directory validation (138 total)
-- refactor: Improve error messages with HTTP status codes and response bodies
-- refactor: Network errors now include original error and stack trace
-
-**Breaking Changes:** None - fully backward compatible
-
 ## 0.4.0
 
-- feat: Add YAML configuration support - configure project settings in `pubspec.yaml`
-- feat: Add environment variable support for API token (`PO_EDITOR_API_TOKEN`)
-- feat: Add configuration priority system (CLI > ENV > YAML > Defaults)
-- feat: Add custom config file support with `--config` option
-- feat: Add security warning when API token found in YAML files
-- refactor: Make all CLI arguments optional (can use YAML config instead)
-- test: Add comprehensive configuration and integration tests
-- docs: Update README with new configuration options and security best practices
-- chore: Add `yaml` package dependency
+### New Features
+
+**YAML Configuration Support**
+
+- Configure project settings in your `pubspec.yaml` instead of passing CLI arguments every time
+- Store API token securely in `PO_EDITOR_API_TOKEN` environment variable
+- Use custom config files with `--config` option
+- Configuration priority: CLI arguments > Environment variables > YAML config > Defaults
+
+**Progress Indicators & Verbosity Control**
+
+- See download progress for each language file: "⏳ Downloading en.arb (1/5)..."
+- Color-coded output: ✅ success, ⚠️ warnings, ❌ errors
+- `--quiet` mode for CI/CD (only show errors)
+- `--verbose` mode for debugging (show detailed information)
+- Success summary when complete
+
+**Improved Reliability**
+
+- Automatic retry with exponential backoff for transient failures (network issues, server errors)
+- Automatic creation of output directory if it doesn't exist
+- Better error messages with detailed information when something goes wrong
+
+### Improvements
+
+- Lower Dart SDK requirement to `^3.0.0` for broader compatibility
+- All CLI arguments are now optional when using YAML configuration
+- Security warning if API token is found in YAML files (use environment variable instead)
 
 **Breaking Changes:** None - fully backward compatible with existing CLI usage
 
-**Migration Guide:**
+**Getting Started:**
 
-- Existing CLI-only usage continues to work without changes
-- Recommended: Move project settings to `pubspec.yaml` and use `PO_EDITOR_API_TOKEN` environment variable
-- See README for new configuration options
+```yaml
+# pubspec.yaml
+po_editor:
+  project_id: "12345"
+  files_path: "lib/l10n/"
+```
 
-- feat: Add YAML configuration support - configure project settings in `pubspec.yaml`
-- feat: Add environment variable support for API token (`PO_EDITOR_API_TOKEN`)
-- feat: Add configuration priority system (CLI > ENV > YAML > Defaults)
-- feat: Add custom config file support with `--config` option
-- feat: Add security warning when API token found in YAML files
-- refactor: Make all CLI arguments optional (can use YAML config instead)
-- test: Add comprehensive configuration and integration tests
-- docs: Update README with new configuration options and security best practices
-- chore: Add `yaml` package dependency
+```bash
+# Set API token as environment variable
+export PO_EDITOR_API_TOKEN="your_token_here"
 
-**Breaking Changes:** None - fully backward compatible with existing CLI usage
+# Run with minimal arguments
+dart run po_editor_downloader
+```
 
-**Migration Guide:**
-
-- Existing CLI-only usage continues to work without changes
-- Recommended: Move project settings to `pubspec.yaml` and use `PO_EDITOR_API_TOKEN` environment variable
-- See README for new configuration options
+See README for complete configuration options.
 
 ## 0.3.1
 

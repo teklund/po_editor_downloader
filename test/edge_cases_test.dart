@@ -76,23 +76,17 @@ void main() {
     });
 
     group('Boolean Parsing Edge Cases', () {
-      test('should handle various boolean representations', () {
-        final testCases = {
+      test('should only accept true/false strings (case-insensitive)', () {
+        final validTestCases = {
           'true': true,
           'TRUE': true,
           'True': true,
-          '1': true,
-          'yes': true,
-          'YES': true,
           'false': false,
           'FALSE': false,
           'False': false,
-          '0': false,
-          'no': false,
-          'NO': false,
         };
 
-        for (final entry in testCases.entries) {
+        for (final entry in validTestCases.entries) {
           final yaml = {'add_metadata': entry.key};
           final config = PoEditorConfig.fromYaml(yaml);
           expect(
@@ -103,21 +97,28 @@ void main() {
         }
       });
 
-      test('should handle invalid boolean values', () {
-        final yaml = {'add_metadata': 'maybe'};
-        final config = PoEditorConfig.fromYaml(yaml);
+      test('should reject old boolean representations (1, 0, yes, no)', () {
+        final invalidValues = ['1', '0', 'yes', 'YES', 'no', 'NO', 'maybe'];
         
-        expect(config.addMetadata, isNull);
+        for (final value in invalidValues) {
+          final yaml = {'add_metadata': value};
+          final config = PoEditorConfig.fromYaml(yaml);
+          expect(
+            config.addMetadata,
+            isNull,
+            reason: 'Expected "$value" to be rejected (return null)',
+          );
+        }
       });
 
       test('should handle numeric boolean values', () {
         final yaml1 = {'add_metadata': 1};
         final config1 = PoEditorConfig.fromYaml(yaml1);
-        expect(config1.addMetadata, isNull); // Not a string '1'
+        expect(config1.addMetadata, isNull); // Numeric values not supported
 
         final yaml2 = {'add_metadata': 0};
         final config2 = PoEditorConfig.fromYaml(yaml2);
-        expect(config2.addMetadata, isNull); // Not a string '0'
+        expect(config2.addMetadata, isNull); // Numeric values not supported
       });
     });
 

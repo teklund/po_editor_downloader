@@ -165,13 +165,19 @@ class PoEditorConfig {
   }
 
   /// Parse a boolean value from various input types
+  ///
+  /// Accepts:
+  /// - Boolean values directly (true/false)
+  /// - String values: 'true' or 'false' (case-insensitive)
+  ///
+  /// Returns null for any other input (including '1', '0', 'yes', 'no')
   static bool? _parseBool(dynamic value) {
     if (value == null) return null;
     if (value is bool) return value;
     if (value is String) {
       final lower = value.toLowerCase();
-      if (lower == 'true' || lower == '1' || lower == 'yes') return true;
-      if (lower == 'false' || lower == '0' || lower == 'no') return false;
+      if (lower == 'true') return true;
+      if (lower == 'false') return false;
     }
     return null;
   }

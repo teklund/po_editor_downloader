@@ -142,6 +142,8 @@ dart run po_editor_downloader --add_metadata=true
 | `filters` | YAML or CLI | Filter by status: `translated`, `untranslated`, `fuzzy`, `not_fuzzy`, `automatic`, `not_automatic`, `proofread`, `not_proofread` | - |
 | `add_metadata` | YAML or CLI | Include metadata (locale, language name, percentage, last updated) in ARB files | `false` |
 | `config` | CLI only | Path to custom YAML configuration file | `pubspec.yaml` |
+| `--quiet`, `-q` | CLI only | Quiet mode - show only errors (useful for CI/CD) | - |
+| `--verbose`, `-v` | CLI only | Verbose mode - show debug information (useful for troubleshooting) | - |
 
 ### Configuration Priority
 
@@ -245,6 +247,21 @@ This adds:
 - `@@language` - Language name
 - `@@percentage` - Translation completion percentage
 - `@@updated` - Last update timestamp
+
+### Verbosity Control
+
+Control the amount of output:
+
+```sh
+# Quiet mode - only show errors (useful for CI/CD)
+dart run po_editor_downloader --quiet
+
+# Verbose mode - show debug information (useful for troubleshooting)
+dart run po_editor_downloader --verbose
+
+# Normal mode (default) - show progress and success messages
+dart run po_editor_downloader
+```
 
 ## Troubleshooting
 

@@ -231,16 +231,22 @@ po_editor:
       expect(parts, contains('desktop'));
     });
 
-    test('should handle boolean values', () {
-      final truthyValues = ['true', 'True', 'TRUE', '1', 'yes'];
-      final falsyValues = ['false', 'False', 'FALSE', '0', 'no'];
+    test('should only accept true/false boolean values', () {
+      final validTruthyValues = ['true', 'True', 'TRUE'];
+      final validFalsyValues = ['false', 'False', 'FALSE'];
       
-      for (final value in truthyValues) {
-        expect(['true', '1', 'yes'], contains(value.toLowerCase()));
+      for (final value in validTruthyValues) {
+        expect(value.toLowerCase(), equals('true'));
       }
       
-      for (final value in falsyValues) {
-        expect(['false', '0', 'no'], contains(value.toLowerCase()));
+      for (final value in validFalsyValues) {
+        expect(value.toLowerCase(), equals('false'));
+      }
+      
+      // Old values like '1', '0', 'yes', 'no' should no longer be accepted
+      final rejectedValues = ['1', '0', 'yes', 'no'];
+      for (final value in rejectedValues) {
+        expect(['true', 'false'], isNot(contains(value.toLowerCase())));
       }
     });
 

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
+import 'package:po_editor_downloader/src/logger.dart';
 import 'package:po_editor_downloader/src/retry_helper.dart';
 
 const apiTokenOption = 'api_token';
@@ -91,6 +92,18 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
       abbr: 'h',
       negatable: false,
       help: 'Show this help message',
+    )
+    ..addFlag(
+      'quiet',
+      abbr: 'q',
+      negatable: false,
+      help: 'Quiet mode - show only errors',
+    )
+    ..addFlag(
+      'verbose',
+      abbr: 'v',
+      negatable: false,
+      help: 'Verbose mode - show debug information',
     );
 
   final result = parser.parse(arguments);
@@ -166,13 +179,17 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
 }
 
 /// Download translations for all languages in a project
-Future<void> downloadTranslations(PoEditorConfig config) async {
+Future<void> downloadTranslations(
+  PoEditorConfig config, {
+  Logger logger = const Logger(LogLevel.normal),
+}) async {
   final filesPath = config.filesPath ?? defaultFilesPath;
   if (config.filesPath == null) {
-    print('No "files_path" specified, will default to $defaultFilesPath');
+    logger.info('No "files_path" specified, will default to $defaultFilesPath');
   }
 
   // Ensure output directory exists and is writable
+  logger.debug('Ensuring output directory exists: $filesPath');
   await ensureOutputDirectory(filesPath);
 
   final service = PoEditorService(
@@ -183,21 +200,26 @@ Future<void> downloadTranslations(PoEditorConfig config) async {
   );
 
   // Fetch languages with retry logic
+  logger.progress('Downloading translations...');
   final languages = await withRetry(
     () => service.getLanguages(),
     onRetry: (attempt, delay, error) {
-      print('⚠️  Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
+      logger.warning('Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
     },
   );
 
+  logger.info('Found ${languages.length} language(s)\n');
+
+  int completed = 0;
   for (final language in languages) {
-    print("$language");
+    completed++;
+    logger.info('[$completed/${languages.length}] ${language.name} (${language.code})...');
 
     // Fetch translations with retry logic
     final translations = await withRetry(
       () => service.getTranslations(language),
       onRetry: (attempt, delay, error) {
-        print('⚠️  Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
+        logger.warning('Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
       },
     ).then(
       (value) {
@@ -214,8 +236,11 @@ Future<void> downloadTranslations(PoEditorConfig config) async {
       translations: translations,
       outputPath: filesPath,
       includeMetadata: config.addMetadata,
+      logger: logger,
     );
   }
+
+  logger.success('\nDone! Downloaded ${languages.length} language(s) to $filesPath');
 }
 
 /// Write an ARB file for a specific language
@@ -224,6 +249,7 @@ Future<void> writeArbFile({
   required Map<String, dynamic> translations,
   required String outputPath,
   bool? includeMetadata,
+  Logger logger = const Logger(LogLevel.normal),
 }) async {
   final Map<String, dynamic> translationResult = {};
 
@@ -236,6 +262,7 @@ Future<void> writeArbFile({
       '@@percentage': '${language.percentage}',
     };
     translationResult.addAll(metadata);
+    logger.debug('Added metadata for ${language.code}');
   }
 
   // Add translations
@@ -246,12 +273,32 @@ Future<void> writeArbFile({
   final arbText = encoder.convert(translationResult);
   final file = File('$outputPath/app_${language.code}.arb');
   await file.writeAsString(arbText);
+  
+  logger.success('  Saved: app_${language.code}.arb (${translations.length} terms)');
 }
 
 Future<void> main(List<String> arguments) async {
   try {
+    // Parse arguments first to get flags
+    final parser = ArgParser()
+      ..addFlag('quiet', abbr: 'q', negatable: false)
+      ..addFlag('verbose', abbr: 'v', negatable: false)
+      ..addFlag('help', abbr: 'h', negatable: false);
+    
+    // Parse only the flags we care about for logging
+    final preliminaryResult = parser.parse(arguments);
+    
+    // Determine log level
+    final logLevel = preliminaryResult['quiet'] == true
+        ? LogLevel.quiet
+        : preliminaryResult['verbose'] == true
+            ? LogLevel.verbose
+            : LogLevel.normal;
+    
+    final logger = Logger(logLevel);
+    
     final config = await loadConfiguration(arguments);
-    await downloadTranslations(config);
+    await downloadTranslations(config, logger: logger);
   } on ConfigurationException catch (e) {
     stderr.writeln('\n❌ Configuration Error:\n${e.message}');
     exit(1);
