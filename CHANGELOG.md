@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.1
+
+### Documentation
+
+- Added comprehensive library documentation with usage examples
+- Created `example/` directory with working code examples
+- Added `example/README.md` with detailed instructions
+- Fixes pub.dev score issues (missing documentation and example)
+
 ## 1.0.0
 
 ### New Features
