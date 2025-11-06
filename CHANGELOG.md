@@ -6,14 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 
-**YAML Configuration Support**
+#### YAML Configuration Support
 
 - Configure project settings in your `pubspec.yaml` instead of passing CLI arguments every time
 - Store API token securely in `PO_EDITOR_API_TOKEN` environment variable
 - Use custom config files with `--config` option
 - Configuration priority: CLI arguments > Environment variables > YAML config > Defaults
 
-**Progress Indicators & Verbosity Control**
+#### Progress Indicators & Verbosity Control
 
 - See download progress for each language file: "⏳ Downloading en.arb (1/5)..."
 - Color-coded output: ✅ success, ⚠️ warnings, ❌ errors
@@ -21,11 +21,18 @@ All notable changes to this project will be documented in this file.
 - `--verbose` mode for debugging (show detailed information)
 - Success summary when complete
 
-**Improved Reliability**
+#### Improved Reliability
 
 - Automatic retry with exponential backoff for transient failures (network issues, server errors)
 - Automatic creation of output directory if it doesn't exist
 - Better error messages with detailed information when something goes wrong
+
+#### Custom Filename Patterns
+
+- Customize ARB file naming with `filename_pattern` option
+- Use `{locale}` placeholder for language code
+- Examples: `{locale}.arb`, `intl_{locale}.arb`, `translations_{locale}.arb`
+- Default pattern: `app_{locale}.arb` (maintains backward compatibility)
 
 ### Improvements
 
@@ -34,25 +41,6 @@ All notable changes to this project will be documented in this file.
 - Security warning if API token is found in YAML files (use environment variable instead)
 
 **Breaking Changes:** None - fully backward compatible with existing CLI usage
-
-**Getting Started:**
-
-```yaml
-# pubspec.yaml
-po_editor:
-  project_id: "12345"
-  files_path: "lib/l10n/"
-```
-
-```bash
-# Set API token as environment variable
-export PO_EDITOR_API_TOKEN="your_token_here"
-
-# Run with minimal arguments
-dart run po_editor_downloader
-```
-
-See README for complete configuration options.
 
 ## 0.3.1
 

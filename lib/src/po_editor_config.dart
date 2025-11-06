@@ -17,14 +17,17 @@ class PoEditorConfig {
   /// POEditor project ID
   final String? projectId;
 
-  /// Output directory path for ARB files
-  final String? filesPath;
-
   /// Tags to filter terms (comma-separated or single tag)
   final String? tags;
 
   /// Filters for terms (e.g., translated, untranslated, fuzzy)
   final String? filters;
+
+  /// Output directory path for ARB files
+  final String? filesPath;
+
+  /// Filename pattern for ARB files. Use {locale} as placeholder for language code
+  final String? filenamePattern;
 
   /// Whether to include metadata in ARB files
   final bool? addMetadata;
@@ -33,9 +36,10 @@ class PoEditorConfig {
   const PoEditorConfig({
     this.apiToken,
     this.projectId,
-    this.filesPath,
     this.tags,
     this.filters,
+    this.filesPath,
+    this.filenamePattern,
     this.addMetadata,
   });
 
@@ -57,9 +61,10 @@ class PoEditorConfig {
     return PoEditorConfig(
       // Intentionally NOT reading api_token from YAML for security
       projectId: yaml['project_id']?.toString(),
-      filesPath: yaml['files_path']?.toString(),
       tags: yaml['tags']?.toString(),
       filters: yaml['filters']?.toString(),
+      filesPath: yaml['files_path']?.toString(),
+      filenamePattern: yaml['filename_pattern']?.toString(),
       addMetadata: _parseBool(yaml['add_metadata']),
     );
   }
@@ -69,9 +74,10 @@ class PoEditorConfig {
     return PoEditorConfig(
       apiToken: args['api_token'],
       projectId: args['project_id'],
-      filesPath: args['files_path'],
       tags: args['tags'],
       filters: args['filters'],
+      filesPath: args['files_path'],
+      filenamePattern: args['filename_pattern'],
       addMetadata: _parseBool(args['add_metadata']),
     );
   }
@@ -98,10 +104,13 @@ class PoEditorConfig {
       apiToken: primary.apiToken ?? secondary.apiToken ?? tertiary?.apiToken,
       projectId:
           primary.projectId ?? secondary.projectId ?? tertiary?.projectId,
-      filesPath:
-          primary.filesPath ?? secondary.filesPath ?? tertiary?.filesPath,
       tags: primary.tags ?? secondary.tags ?? tertiary?.tags,
       filters: primary.filters ?? secondary.filters ?? tertiary?.filters,
+      filesPath:
+          primary.filesPath ?? secondary.filesPath ?? tertiary?.filesPath,
+      filenamePattern: primary.filenamePattern ??
+          secondary.filenamePattern ??
+          tertiary?.filenamePattern,
       addMetadata:
           primary.addMetadata ?? secondary.addMetadata ?? tertiary?.addMetadata,
     );
@@ -138,17 +147,19 @@ class PoEditorConfig {
   PoEditorConfig copyWith({
     String? apiToken,
     String? projectId,
-    String? filesPath,
     String? tags,
     String? filters,
+    String? filesPath,
+    String? filenamePattern,
     bool? addMetadata,
   }) {
     return PoEditorConfig(
       apiToken: apiToken ?? this.apiToken,
       projectId: projectId ?? this.projectId,
-      filesPath: filesPath ?? this.filesPath,
       tags: tags ?? this.tags,
       filters: filters ?? this.filters,
+      filesPath: filesPath ?? this.filesPath,
+      filenamePattern: filenamePattern ?? this.filenamePattern,
       addMetadata: addMetadata ?? this.addMetadata,
     );
   }
@@ -158,9 +169,10 @@ class PoEditorConfig {
     return 'PoEditorConfig('
         'apiToken: ${apiToken != null ? "***" : "null"}, '
         'projectId: $projectId, '
-        'filesPath: $filesPath, '
         'tags: $tags, '
         'filters: $filters, '
+        'filesPath: $filesPath, '
+        'filenamePattern: $filenamePattern, '
         'addMetadata: $addMetadata)';
   }
 

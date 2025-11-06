@@ -13,11 +13,13 @@ const filtersOption = 'filters';
 const filesPathOption = 'files_path';
 const defaultFilesPath = 'lib/l10n/';
 const addMetaDataOption = 'add_metadata';
+const filenamePatternOption = 'filename_pattern';
+const defaultFilenamePattern = 'app_{locale}.arb';
 
 /// Ensure the output directory exists and is writable
 Future<void> ensureOutputDirectory(String path) async {
   final dir = Directory(path);
-  
+
   // Create directory if it doesn't exist
   if (!await dir.exists()) {
     print('Creating output directory: $path');
@@ -30,10 +32,11 @@ Future<void> ensureOutputDirectory(String path) async {
       );
     }
   }
-  
+
   // Test if directory is writable
   try {
-    final testFile = File('${dir.path}/.write_test_${DateTime.now().millisecondsSinceEpoch}');
+    final testFile = File(
+        '${dir.path}/.write_test_${DateTime.now().millisecondsSinceEpoch}');
     await testFile.writeAsString('test');
     await testFile.delete();
   } catch (e) {
@@ -83,6 +86,12 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
       help: 'Include metadata in ARB files (true/false)',
     )
     ..addOption(
+      filenamePatternOption,
+      mandatory: false,
+      help:
+          'Filename pattern for ARB files. Use {locale} as placeholder (default: $defaultFilenamePattern)',
+    )
+    ..addOption(
       'config',
       mandatory: false,
       help: 'Path to custom config file',
@@ -127,15 +136,27 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     print('    files_path: "lib/l10n/"');
     print('    tags: "mobile"');
     print('    filters: "translated"');
-    print('    add_metadata: true\n');
+    print('    add_metadata: true');
+    print('    filename_pattern: "app_{locale}.arb"  # Default\n');
+    print('Filename Patterns:');
+    print('  Use {locale} as placeholder for the language code');
+    print('  Examples:');
+    print('    "app_{locale}.arb"        -> app_en.arb, app_es.arb');
+    print('    "{locale}.arb"            -> en.arb, es.arb');
+    print('    "intl_{locale}.arb"       -> intl_en.arb, intl_es.arb');
+    print('    "translations_{locale}.arb" -> translations_en.arb\n');
     print('Examples:');
     print('  # Use YAML config + env var (recommended)');
     print('  export PO_EDITOR_API_TOKEN="your_token"');
     print('  dart run po_editor_downloader\n');
+    print('  # Custom filename pattern');
+    print(
+        '  dart run po_editor_downloader --filename_pattern="{locale}.arb"\n');
     print('  # Override specific settings');
     print('  dart run po_editor_downloader --tags=web\n');
     print('  # Full CLI usage');
-    print('  dart run po_editor_downloader --api_token=token --project_id=123\n');
+    print(
+        '  dart run po_editor_downloader --api_token=token --project_id=123\n');
     exit(0);
   }
 
@@ -147,6 +168,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     'tags': result[tagsOption],
     'filters': result[filtersOption],
     'add_metadata': result[addMetaDataOption],
+    'filename_pattern': result[filenamePatternOption],
   });
 
   // 2. Read from environment variables
@@ -155,7 +177,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
   // 3. Read from config file (custom or pubspec.yaml)
   PoEditorConfig? yamlConfig;
   final customConfigPath = result['config'] as String?;
-  
+
   if (customConfigPath != null) {
     yamlConfig = await ConfigReader.readFromFile(customConfigPath);
     if (yamlConfig == null) {
@@ -204,7 +226,8 @@ Future<void> downloadTranslations(
   final languages = await withRetry(
     () => service.getLanguages(),
     onRetry: (attempt, delay, error) {
-      logger.warning('Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
+      logger.warning(
+          'Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
     },
   );
 
@@ -213,13 +236,15 @@ Future<void> downloadTranslations(
   int completed = 0;
   for (final language in languages) {
     completed++;
-    logger.info('[$completed/${languages.length}] ${language.name} (${language.code})...');
+    logger.info(
+        '[$completed/${languages.length}] ${language.name} (${language.code})...');
 
     // Fetch translations with retry logic
     final translations = await withRetry(
       () => service.getTranslations(language),
       onRetry: (attempt, delay, error) {
-        logger.warning('Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
+        logger.warning(
+            'Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
       },
     ).then(
       (value) {
@@ -236,11 +261,13 @@ Future<void> downloadTranslations(
       translations: translations,
       outputPath: filesPath,
       includeMetadata: config.addMetadata,
+      filenamePattern: config.filenamePattern ?? defaultFilenamePattern,
       logger: logger,
     );
   }
 
-  logger.success('\nDone! Downloaded ${languages.length} language(s) to $filesPath');
+  logger.success(
+      '\nDone! Downloaded ${languages.length} language(s) to $filesPath');
 }
 
 /// Write an ARB file for a specific language
@@ -249,6 +276,7 @@ Future<void> writeArbFile({
   required Map<String, dynamic> translations,
   required String outputPath,
   bool? includeMetadata,
+  String filenamePattern = defaultFilenamePattern,
   Logger logger = const Logger(LogLevel.normal),
 }) async {
   final Map<String, dynamic> translationResult = {};
@@ -268,13 +296,16 @@ Future<void> writeArbFile({
   // Add translations
   translationResult.addAll(translations);
 
+  // Generate filename from pattern
+  final filename = filenamePattern.replaceAll('{locale}', language.code);
+
   // Format and write file
   final encoder = JsonEncoder.withIndent("    ");
   final arbText = encoder.convert(translationResult);
-  final file = File('$outputPath/app_${language.code}.arb');
+  final file = File('$outputPath/$filename');
   await file.writeAsString(arbText);
-  
-  logger.success('  Saved: app_${language.code}.arb (${translations.length} terms)');
+
+  logger.success('  Saved: $filename (${translations.length} terms)');
 }
 
 Future<void> main(List<String> arguments) async {
@@ -284,19 +315,19 @@ Future<void> main(List<String> arguments) async {
       ..addFlag('quiet', abbr: 'q', negatable: false)
       ..addFlag('verbose', abbr: 'v', negatable: false)
       ..addFlag('help', abbr: 'h', negatable: false);
-    
+
     // Parse only the flags we care about for logging
     final preliminaryResult = parser.parse(arguments);
-    
+
     // Determine log level
     final logLevel = preliminaryResult['quiet'] == true
         ? LogLevel.quiet
         : preliminaryResult['verbose'] == true
             ? LogLevel.verbose
             : LogLevel.normal;
-    
+
     final logger = Logger(logLevel);
-    
+
     final config = await loadConfiguration(arguments);
     await downloadTranslations(config, logger: logger);
   } on ConfigurationException catch (e) {

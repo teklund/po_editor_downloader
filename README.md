@@ -141,6 +141,7 @@ dart run po_editor_downloader --add_metadata=true
 | `tags` | YAML or CLI | Filter by tags (single tag or comma-separated list) | - |
 | `filters` | YAML or CLI | Filter by status: `translated`, `untranslated`, `fuzzy`, `not_fuzzy`, `automatic`, `not_automatic`, `proofread`, `not_proofread` | - |
 | `add_metadata` | YAML or CLI | Include metadata (locale, language name, percentage, last updated) in ARB files | `false` |
+| `filename_pattern` | YAML or CLI | Filename pattern for ARB files. Use `{locale}` as placeholder (e.g., `{locale}.arb`, `intl_{locale}.arb`) | `app_{locale}.arb` |
 | `config` | CLI only | Path to custom YAML configuration file | `pubspec.yaml` |
 | `--quiet`, `-q` | CLI only | Quiet mode - show only errors (useful for CI/CD) | - |
 | `--verbose`, `-v` | CLI only | Verbose mode - show debug information (useful for troubleshooting) | - |
@@ -262,6 +263,36 @@ dart run po_editor_downloader --verbose
 # Normal mode (default) - show progress and success messages
 dart run po_editor_downloader
 ```
+
+### Custom Filename Patterns
+
+Customize how ARB files are named using the `filename_pattern` option with `{locale}` as a placeholder:
+
+```sh
+# Use simple locale names: en.arb, es.arb
+dart run po_editor_downloader --filename_pattern="{locale}.arb"
+
+# Use intl prefix: intl_en.arb, intl_es.arb
+dart run po_editor_downloader --filename_pattern="intl_{locale}.arb"
+
+# Use translations prefix: translations_en.arb, translations_es.arb
+dart run po_editor_downloader --filename_pattern="translations_{locale}.arb"
+```
+
+Or configure in `pubspec.yaml`:
+
+```yaml
+po_editor:
+  project_id: "12345"
+  filename_pattern: "{locale}.arb"  # Generates: en.arb, es.arb, etc.
+```
+
+**Common patterns:**
+
+- `app_{locale}.arb` (default) → `app_en.arb`, `app_es.arb`
+- `{locale}.arb` → `en.arb`, `es.arb`
+- `intl_{locale}.arb` → `intl_en.arb`, `intl_es.arb`
+- `l10n_{locale}.arb` → `l10n_en.arb`, `l10n_es.arb`
 
 ## Troubleshooting
 
