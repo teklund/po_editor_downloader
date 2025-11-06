@@ -44,9 +44,10 @@ Add a `po_editor` section to your `pubspec.yaml`:
 po_editor:
   # IMPORTANT: Do NOT store api_token here for security reasons!
   project_id: "your_project_id"
-  files_path: "lib/l10n/"
   tags: "mobile"
   filters: "translated"
+  files_path: "lib/l10n/"
+  filename_pattern: "app_{locale}.arb"
   add_metadata: true
 ```
 
@@ -139,11 +140,11 @@ dart run po_editor_downloader --add_metadata=true
 
 | Parameter | Source | Description | Default |
 |-----------|--------|-------------|---------|
-| `files_path` | YAML or CLI | Output directory path | `lib/l10n/` |
 | `tags` | YAML or CLI | Filter by tags (single tag or comma-separated list) | - |
 | `filters` | YAML or CLI | Filter by status: `translated`, `untranslated`, `fuzzy`, `not_fuzzy`, `automatic`, `not_automatic`, `proofread`, `not_proofread` | - |
-| `add_metadata` | YAML or CLI | Include metadata (locale, language name, percentage, last updated) in ARB files | `false` |
+| `files_path` | YAML or CLI | Output directory path | `lib/l10n/` |
 | `filename_pattern` | YAML or CLI | Filename pattern for ARB files. Use `{locale}` as placeholder (e.g., `{locale}.arb`, `intl_{locale}.arb`) | `app_{locale}.arb` |
+| `add_metadata` | YAML or CLI | Include metadata (locale, language name, percentage, last updated) in ARB files | `false` |
 | `config` | CLI only | Path to custom YAML configuration file | `pubspec.yaml` |
 | `--quiet`, `-q` | CLI only | Quiet mode - show only errors (useful for CI/CD) | - |
 | `--verbose`, `-v` | CLI only | Verbose mode - show debug information (useful for troubleshooting) | - |

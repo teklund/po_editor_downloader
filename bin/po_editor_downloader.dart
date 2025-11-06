@@ -11,9 +11,9 @@ const projectIdOption = 'project_id';
 const tagsOption = 'tags';
 const filtersOption = 'filters';
 const filesPathOption = 'files_path';
-const defaultFilesPath = 'lib/l10n/';
-const addMetaDataOption = 'add_metadata';
 const filenamePatternOption = 'filename_pattern';
+const addMetaDataOption = 'add_metadata';
+const defaultFilesPath = 'lib/l10n/';
 const defaultFilenamePattern = 'app_{locale}.arb';
 
 /// Ensure the output directory exists and is writable
@@ -71,25 +71,25 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
       help: 'Filter by tags (comma-separated)',
     )
     ..addOption(
-      filesPathOption,
-      mandatory: false,
-      help: 'Output directory path (default: $defaultFilesPath)',
-    )
-    ..addOption(
       filtersOption,
       mandatory: false,
       help: 'Filter by status (e.g., translated, untranslated)',
     )
     ..addOption(
-      addMetaDataOption,
+      filesPathOption,
       mandatory: false,
-      help: 'Include metadata in ARB files (true/false)',
+      help: 'Output directory path (default: $defaultFilesPath)',
     )
     ..addOption(
       filenamePatternOption,
       mandatory: false,
       help:
           'Filename pattern for ARB files. Use {locale} as placeholder (default: $defaultFilenamePattern)',
+    )
+    ..addOption(
+      addMetaDataOption,
+      mandatory: false,
+      help: 'Include metadata in ARB files (true/false)',
     )
     ..addOption(
       'config',
@@ -133,11 +133,11 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     print('YAML Configuration (pubspec.yaml):');
     print('  po_editor:');
     print('    project_id: "12345"');
-    print('    files_path: "lib/l10n/"');
     print('    tags: "mobile"');
     print('    filters: "translated"');
-    print('    add_metadata: true');
-    print('    filename_pattern: "app_{locale}.arb"  # Default\n');
+    print('    files_path: "lib/l10n/"');
+    print('    filename_pattern: "app_{locale}.arb"  # Default');
+    print('    add_metadata: true\n');
     print('Filename Patterns:');
     print('  Use {locale} as placeholder for the language code');
     print('  Examples:');
@@ -164,11 +164,11 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
   final cliConfig = PoEditorConfig.fromCommandLine({
     'api_token': result[apiTokenOption],
     'project_id': result[projectIdOption],
-    'files_path': result[filesPathOption],
     'tags': result[tagsOption],
     'filters': result[filtersOption],
-    'add_metadata': result[addMetaDataOption],
+    'files_path': result[filesPathOption],
     'filename_pattern': result[filenamePatternOption],
+    'add_metadata': result[addMetaDataOption],
   });
 
   // 2. Read from environment variables
@@ -231,7 +231,7 @@ Future<void> downloadTranslations(
     },
   );
 
-  logger.info('Found ${languages.length} language(s)\n');
+  logger.info('Found ${languages.length} language(s)');
 
   int completed = 0;
   for (final language in languages) {
@@ -267,7 +267,7 @@ Future<void> downloadTranslations(
   }
 
   logger.success(
-      '\nDone! Downloaded ${languages.length} language(s) to $filesPath');
+      'Done! Downloaded ${languages.length} language(s) to $filesPath');
 }
 
 /// Write an ARB file for a specific language
@@ -305,24 +305,19 @@ Future<void> writeArbFile({
   final file = File('$outputPath/$filename');
   await file.writeAsString(arbText);
 
-  logger.success('  Saved: $filename (${translations.length} terms)');
+  logger.success('Saved: $filename (${translations.length} terms)');
 }
 
 Future<void> main(List<String> arguments) async {
   try {
-    // Parse arguments first to get flags
-    final parser = ArgParser()
-      ..addFlag('quiet', abbr: 'q', negatable: false)
-      ..addFlag('verbose', abbr: 'v', negatable: false)
-      ..addFlag('help', abbr: 'h', negatable: false);
+    // Determine log level by checking for flags in arguments
+    final isQuiet = arguments.contains('--quiet') || arguments.contains('-q');
+    final isVerbose =
+        arguments.contains('--verbose') || arguments.contains('-v');
 
-    // Parse only the flags we care about for logging
-    final preliminaryResult = parser.parse(arguments);
-
-    // Determine log level
-    final logLevel = preliminaryResult['quiet'] == true
+    final logLevel = isQuiet
         ? LogLevel.quiet
-        : preliminaryResult['verbose'] == true
+        : isVerbose
             ? LogLevel.verbose
             : LogLevel.normal;
 
