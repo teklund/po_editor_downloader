@@ -1,15 +1,16 @@
 name: po_editor_downloader
 description: CLI tool for a simple way of updating translations in Flutter from POEditor.
-version: 0.3.0
+version: 0.4.1
 homepage: https://github.com/teklund/po_editor_downloader
 
 environment:
-  sdk: ^3.4.0
+  sdk: ^3.0.0
 
 dependencies:
   http: ^1.1.0
   args: ^2.4.2
+  yaml: ^3.1.2
 
 dev_dependencies:
-  lints: ^5.0.0
+  lints: ^6.0.0
   test: ^1.25.10
