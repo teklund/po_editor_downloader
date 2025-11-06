@@ -12,7 +12,7 @@ void main() async {
   // Example 1: Basic configuration
   print('Example 1: Basic configuration');
   print('=' * 50);
-  
+
   final basicConfig = PoEditorConfig(
     apiToken: 'your-api-token-here',
     projectId: '12345',
@@ -28,7 +28,7 @@ void main() async {
   // Example 2: Advanced configuration with filtering
   print('Example 2: Advanced configuration with filtering');
   print('=' * 50);
-  
+
   final advancedConfig = PoEditorConfig(
     apiToken: 'your-api-token-here',
     projectId: '12345',
@@ -48,9 +48,9 @@ void main() async {
   // Example 3: Reading configuration from YAML
   print('Example 3: Reading from pubspec.yaml');
   print('=' * 50);
-  
+
   final yamlConfig = await ConfigReader.readFromPubspec();
-  
+
   if (yamlConfig != null) {
     print('Configuration loaded from pubspec.yaml:');
     print('  Project ID: ${yamlConfig.projectId}');
@@ -85,7 +85,7 @@ void main() async {
   // Example 5: Using ReCase for string transformations
   print('Example 5: String case transformations');
   print('=' * 50);
-  
+
   final rc = ReCase('hello_world');
   print('Original: hello_world');
   print('  camelCase: ${rc.toCamelCase()}');
