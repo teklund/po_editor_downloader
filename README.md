@@ -5,7 +5,7 @@ A CLI tool for downloading and converting translations from [POEditor](https://p
 [![Pub Version](https://img.shields.io/pub/v/po_editor_downloader)](https://pub.dev/packages/po_editor_downloader)
 [![Dart SDK](https://img.shields.io/badge/Dart%20SDK-%5E3.4.0-blue)](https://dart.dev)
 [![CI](https://github.com/teklund/po_editor_downloader/actions/workflows/pull_request.yml/badge.svg)](https://github.com/teklund/po_editor_downloader/actions/workflows/pull_request.yml)
-[![codecov](https://codecov.io/gh/teklund/po_editor_downloader/branch/main/graph/badge.svg)](https://codecov.io/gh/teklund/po_editor_downloader)
+[![codecov](https://codecov.io/gh/teklund/po_editor_downloader/graph/badge.svg?token=DQ1F6N4L3O)](https://codecov.io/gh/teklund/po_editor_downloader)
 
 ## Features
 
