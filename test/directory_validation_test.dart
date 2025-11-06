@@ -98,7 +98,7 @@ void main() {
         await Process.run('chmod', ['555', readOnlyDir.path]);
 
         final testFile = File('${readOnlyDir.path}/test.txt');
-        
+
         try {
           await testFile.writeAsString('test');
           fail('Should have thrown an exception');
@@ -127,7 +127,8 @@ void main() {
 
     test('should handle very long path names', () async {
       // Create a reasonably long path (but not excessive to avoid OS limits)
-      final longPath = '${tempDir.path}/very/long/nested/directory/structure/for/testing/purposes';
+      final longPath =
+          '${tempDir.path}/very/long/nested/directory/structure/for/testing/purposes';
       final longDir = Directory(longPath);
 
       await longDir.create(recursive: true);

@@ -4,10 +4,10 @@ import 'dart:io';
 enum LogLevel {
   /// Only show errors
   quiet,
-  
+
   /// Show normal output (info and errors)
   normal,
-  
+
   /// Show verbose output (debug, info, and errors)
   verbose,
 }

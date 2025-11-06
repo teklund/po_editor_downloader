@@ -232,7 +232,8 @@ void main() {
       );
     });
 
-    test('should throw PoEditorApiException when export request fails', () async {
+    test('should throw PoEditorApiException when export request fails',
+        () async {
       final mockClient = MockClient((request) async {
         if (request.url.toString().contains('/projects/export')) {
           return http.Response('{"error": "Export failed"}', 400);
@@ -338,7 +339,8 @@ void main() {
       await service.getTranslations(language);
       expect(capturedBody, contains('tags'));
       // URL encoded comma: %2C
-      expect(capturedBody, anyOf(contains('mobile,ios'), contains('mobile%2Cios')));
+      expect(capturedBody,
+          anyOf(contains('mobile,ios'), contains('mobile%2Cios')));
     });
 
     test('should include filters in export request', () async {

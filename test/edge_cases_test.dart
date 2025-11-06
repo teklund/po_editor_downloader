@@ -99,7 +99,7 @@ void main() {
 
       test('should reject old boolean representations (1, 0, yes, no)', () {
         final invalidValues = ['1', '0', 'yes', 'YES', 'no', 'NO', 'maybe'];
-        
+
         for (final value in invalidValues) {
           final yaml = {'add_metadata': value};
           final config = PoEditorConfig.fromYaml(yaml);
@@ -259,7 +259,8 @@ void main() {
         final string = config.toString();
 
         expect(string, contains('***'));
-        expect(string, isNot(contains('x' * 10))); // Should not contain actual token
+        expect(string,
+            isNot(contains('x' * 10))); // Should not contain actual token
       });
 
       test('should handle special characters in toString', () {
@@ -340,7 +341,7 @@ po_editor:
       test('should warn when API token is in YAML', () async {
         final tempDir = await Directory.systemTemp.createTemp();
         final yamlPath = '${tempDir.path}/pubspec.yaml';
-        
+
         await File(yamlPath).writeAsString('''
 po_editor:
   api_token: "should_not_be_here"
@@ -349,7 +350,7 @@ po_editor:
 
         // This should trigger warning in stderr
         final result = await ConfigReader.readFromFile(yamlPath);
-        
+
         expect(result, isNotNull);
         expect(result!.apiToken, isNull); // Should be ignored
         expect(result.projectId, '12345'); // Should be read
@@ -359,7 +360,7 @@ po_editor:
 
       test('should handle API token from environment', () {
         final envConfig = PoEditorConfig.fromEnvironment();
-        
+
         // Should not throw, even if env var not set
         expect(envConfig, isA<PoEditorConfig>());
       });
@@ -367,26 +368,23 @@ po_editor:
 
     group('ArgParser Edge Cases', () {
       test('should handle empty argument list', () {
-        final parser = ArgParser()
-          ..addOption('api_token', mandatory: false);
+        final parser = ArgParser()..addOption('api_token', mandatory: false);
         final result = parser.parse([]);
-        
+
         expect(result['api_token'], isNull);
       });
 
       test('should handle argument with equals in value', () {
-        final parser = ArgParser()
-          ..addOption('api_token', mandatory: false);
+        final parser = ArgParser()..addOption('api_token', mandatory: false);
         final result = parser.parse(['--api_token=key=value=test']);
-        
+
         expect(result['api_token'], 'key=value=test');
       });
 
       test('should handle argument with spaces in value', () {
-        final parser = ArgParser()
-          ..addOption('api_token', mandatory: false);
+        final parser = ArgParser()..addOption('api_token', mandatory: false);
         final result = parser.parse(['--api_token=test value']);
-        
+
         expect(result['api_token'], 'test value');
       });
 
@@ -394,8 +392,9 @@ po_editor:
         final parser = ArgParser()
           ..addOption('api_token', mandatory: false)
           ..addOption('project_id', mandatory: false);
-        final result = parser.parse(['--api_token=token123', '--project_id=456']);
-        
+        final result =
+            parser.parse(['--api_token=token123', '--project_id=456']);
+
         expect(result['api_token'], 'token123');
         expect(result['project_id'], '456');
       });

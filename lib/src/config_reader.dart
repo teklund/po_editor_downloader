@@ -40,7 +40,7 @@ class ConfigReader {
   static Future<PoEditorConfig?> readFromFile(String path) async {
     try {
       final file = File(path);
-      
+
       if (!await file.exists()) {
         return null;
       }
@@ -54,14 +54,14 @@ class ConfigReader {
 
       // Look for po_editor section
       final poEditorSection = yaml['po_editor'];
-      
+
       if (poEditorSection == null) {
         return null;
       }
 
       // Convert YamlMap to regular Map
       final configMap = _yamlToMap(poEditorSection);
-      
+
       return PoEditorConfig.fromYaml(configMap);
     } on FileSystemException {
       // File doesn't exist or can't be read

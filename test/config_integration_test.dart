@@ -73,8 +73,7 @@ po_editor:
         projectId: 'cli_project',
       );
 
-      final merged =
-          PoEditorConfig.merge(cliConfig, envConfig, yamlConfig);
+      final merged = PoEditorConfig.merge(cliConfig, envConfig, yamlConfig);
 
       expect(merged.apiToken, 'cli_token'); // CLI wins
       expect(merged.projectId, 'cli_project'); // CLI only
@@ -96,7 +95,7 @@ po_editor:
       await File(testYamlPath).writeAsString(yamlContent);
 
       final yamlConfig = await ConfigReader.readFromFile(testYamlPath);
-      
+
       // CLI only provides filters override
       final cliConfig = PoEditorConfig.fromCommandLine({
         'filters': 'proofread',
@@ -123,13 +122,13 @@ po_editor:
       final cliConfig = PoEditorConfig.fromCommandLine({});
       final envConfig = PoEditorConfig();
 
-      final merged =
-          PoEditorConfig.merge(cliConfig, envConfig, yamlConfig);
+      final merged = PoEditorConfig.merge(cliConfig, envConfig, yamlConfig);
 
       expect(() => merged.validate(), throwsA(isA<ConfigurationException>()));
     });
 
-    test('Validation succeeds with CLI API token and YAML project ID', () async {
+    test('Validation succeeds with CLI API token and YAML project ID',
+        () async {
       // Create YAML with project config
       final yamlContent = '''
 po_editor:
@@ -160,7 +159,7 @@ po_editor:
       await File(testYamlPath).writeAsString(yamlContent);
 
       final yamlConfig = await ConfigReader.readFromFile(testYamlPath);
-      
+
       // CLI sets it to false
       final cliConfig = PoEditorConfig.fromCommandLine({
         'add_metadata': 'false',
