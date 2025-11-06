@@ -355,4 +355,13 @@ po_editor:
       expect(config, anyOf(isNull, isA<PoEditorConfig>()));
     });
   });
+
+  group('ConfigurationException', () {
+    test('should have proper toString representation', () {
+      final exception = ConfigurationException('Test error message');
+      
+      expect(exception.message, 'Test error message');
+      expect(exception.toString(), 'ConfigurationException: Test error message');
+    });
+  });
 }
