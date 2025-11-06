@@ -48,12 +48,15 @@ void main() async {
 
 ## Security Note
 
-**Never hardcode your API token in source code!** Always use:
+**Never hardcode your API token in source code!**
+Always use:
+
 - Environment variables (recommended)
 - Command-line arguments
 - Secure secrets management
 
 Never store API tokens in:
+
 - YAML files
 - Git repositories
 - Any files that might be committed to version control
