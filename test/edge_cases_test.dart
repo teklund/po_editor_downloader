@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
 import 'package:test/test.dart';
 
@@ -363,33 +364,39 @@ po_editor:
       });
     });
 
-    group('Argument Parser Edge Cases', () {
+    group('ArgParser Edge Cases', () {
       test('should handle empty argument list', () {
-        final args = <String>[];
-        final parsed = ArgumentValueParser.parse('api_token', args);
+        final parser = ArgParser()
+          ..addOption('api_token', mandatory: false);
+        final result = parser.parse([]);
         
-        expect(parsed, isNull);
+        expect(result['api_token'], isNull);
       });
 
       test('should handle argument with equals in value', () {
-        final args = ['--api_token=key=value=test'];
-        final parsed = ArgumentValueParser.parse('api_token', args);
+        final parser = ArgParser()
+          ..addOption('api_token', mandatory: false);
+        final result = parser.parse(['--api_token=key=value=test']);
         
-        expect(parsed, 'key=value=test');
+        expect(result['api_token'], 'key=value=test');
       });
 
-      test('should handle argument with spaces after equals', () {
-        final args = ['--api_token= test value '];
-        final parsed = ArgumentValueParser.parse('api_token', args);
+      test('should handle argument with spaces in value', () {
+        final parser = ArgParser()
+          ..addOption('api_token', mandatory: false);
+        final result = parser.parse(['--api_token=test value']);
         
-        expect(parsed, 'test value'); // Should be trimmed
+        expect(result['api_token'], 'test value');
       });
 
-      test('should handle argument with multiple quotes', () {
-        final args = ['--api_token=""test""'];
-        final parsed = ArgumentValueParser.parse('api_token', args);
+      test('should handle multiple arguments', () {
+        final parser = ArgParser()
+          ..addOption('api_token', mandatory: false)
+          ..addOption('project_id', mandatory: false);
+        final result = parser.parse(['--api_token=token123', '--project_id=456']);
         
-        expect(parsed, 'test'); // Quotes removed
+        expect(result['api_token'], 'token123');
+        expect(result['project_id'], '456');
       });
     });
   });

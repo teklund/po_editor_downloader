@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
+import 'package:po_editor_downloader/src/retry_helper.dart';
 
 const apiTokenOption = 'api_token';
 const projectIdOption = 'project_id';
@@ -127,13 +128,12 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
 
   // 1. Read from CLI arguments
   final cliConfig = PoEditorConfig.fromCommandLine({
-    'api_token': ArgumentValueParser.parse(apiTokenOption, result.arguments),
-    'project_id': ArgumentValueParser.parse(projectIdOption, result.arguments),
-    'files_path': ArgumentValueParser.parse(filesPathOption, result.arguments),
-    'tags': ArgumentValueParser.parse(tagsOption, result.arguments),
-    'filters': ArgumentValueParser.parse(filtersOption, result.arguments),
-    'add_metadata':
-        ArgumentValueParser.parse(addMetaDataOption, result.arguments),
+    'api_token': result[apiTokenOption],
+    'project_id': result[projectIdOption],
+    'files_path': result[filesPathOption],
+    'tags': result[tagsOption],
+    'filters': result[filtersOption],
+    'add_metadata': result[addMetaDataOption],
   });
 
   // 2. Read from environment variables
@@ -141,8 +141,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
 
   // 3. Read from config file (custom or pubspec.yaml)
   PoEditorConfig? yamlConfig;
-  final customConfigPath =
-      ArgumentValueParser.parse('config', result.arguments);
+  final customConfigPath = result['config'] as String?;
   
   if (customConfigPath != null) {
     yamlConfig = await ConfigReader.readFromFile(customConfigPath);
@@ -166,66 +165,101 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
   return mergedConfig;
 }
 
-Future<void> main(List<String> arguments) async {
-  try {
-    // Load and merge configuration from all sources
-    final config = await loadConfiguration(arguments);
+/// Download translations for all languages in a project
+Future<void> downloadTranslations(PoEditorConfig config) async {
+  final filesPath = config.filesPath ?? defaultFilesPath;
+  if (config.filesPath == null) {
+    print('No "files_path" specified, will default to $defaultFilesPath');
+  }
 
-    // Use default values if not specified
-    final filesPath = config.filesPath ?? defaultFilesPath;
-    if (config.filesPath == null) {
-      print('No "files_path" specified, will default to $defaultFilesPath');
-    }
+  // Ensure output directory exists and is writable
+  await ensureOutputDirectory(filesPath);
 
-    // Ensure output directory exists and is writable
-    await ensureOutputDirectory(filesPath);
+  final service = PoEditorService(
+    apiToken: config.apiToken!,
+    projectId: config.projectId!,
+    tags: config.tags,
+    filters: config.filters,
+  );
 
-    final service = PoEditorService(
-      apiToken: config.apiToken!,
-      projectId: config.projectId!,
-      tags: config.tags,
-      filters: config.filters,
+  // Fetch languages with retry logic
+  final languages = await withRetry(
+    () => service.getLanguages(),
+    onRetry: (attempt, delay, error) {
+      print('⚠️  Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
+    },
+  );
+
+  for (final language in languages) {
+    print("$language");
+
+    // Fetch translations with retry logic
+    final translations = await withRetry(
+      () => service.getTranslations(language),
+      onRetry: (attempt, delay, error) {
+        print('⚠️  Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
+      },
+    ).then(
+      (value) {
+        return value.map(
+          (key, value) {
+            return MapEntry(ReCase(key).toCamelCase(), value);
+          },
+        );
+      },
     );
 
-    final languages = await service.getLanguages();
+    await writeArbFile(
+      language: language,
+      translations: translations,
+      outputPath: filesPath,
+      includeMetadata: config.addMetadata,
+    );
+  }
+}
 
-    for (final language in languages) {
-      print("$language");
+/// Write an ARB file for a specific language
+Future<void> writeArbFile({
+  required Language language,
+  required Map<String, dynamic> translations,
+  required String outputPath,
+  bool? includeMetadata,
+}) async {
+  final Map<String, dynamic> translationResult = {};
 
-      final Map<String, dynamic> translationResult = {};
+  // Add metadata if requested
+  if (includeMetadata == true) {
+    final metadata = <String, dynamic>{
+      '@@locale': language.code,
+      '@@updated': language.updated,
+      '@@language': language.name,
+      '@@percentage': '${language.percentage}',
+    };
+    translationResult.addAll(metadata);
+  }
 
-      if (config.addMetadata == true) {
-        final translationsDetails = <String, dynamic>{
-          '@@locale': language.code,
-          '@@updated': language.updated,
-          '@@language': language.name,
-          '@@percentage': '${language.percentage}',
-        };
-        translationResult.addAll(translationsDetails);
-      }
+  // Add translations
+  translationResult.addAll(translations);
 
-      final translations = await service.getTranslations(language).then(
-        (value) {
-          return value.map(
-            (key, value) {
-              return MapEntry(ReCase(key).toCamelCase(), value);
-            },
-          );
-        },
-      );
+  // Format and write file
+  final encoder = JsonEncoder.withIndent("    ");
+  final arbText = encoder.convert(translationResult);
+  final file = File('$outputPath/app_${language.code}.arb');
+  await file.writeAsString(arbText);
+}
 
-      translationResult.addAll(translations);
-
-      var encoder = JsonEncoder.withIndent("    ");
-      final arbText = encoder.convert(translationResult);
-
-      //print(arbText);
-
-      final file = File('$filesPath/app_${language.code}.arb');
-      file.writeAsStringSync(arbText);
-    }
+Future<void> main(List<String> arguments) async {
+  try {
+    final config = await loadConfiguration(arguments);
+    await downloadTranslations(config);
   } on ConfigurationException catch (e) {
     stderr.writeln('\n❌ Configuration Error:\n${e.message}');
+    exit(1);
+  } on PoEditorApiException catch (e) {
+    stderr.writeln('\n❌ API Error:\n$e');
+    exit(1);
+  } on PoEditorNetworkException catch (e) {
+    stderr.writeln('\n❌ Network Error:\n$e');
     exit(1);
   } catch (e) {
     stderr.writeln('\n❌ Error: $e');

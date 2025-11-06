@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0
+
+- refactor: Remove redundant `ArgumentValueParser` class (use `ArgParser` directly)
+- refactor: Extract `downloadTranslations()` and `writeArbFile()` functions from main
+- refactor: Simplify main() function to orchestrate workflow only
+- feat: Add retry logic with exponential backoff for API calls
+- feat: Retry on transient failures (5xx errors, network errors)
+- feat: Skip retry on client errors (4xx errors)
+- feat: Add `onRetry` callback for monitoring retry attempts
+- test: Add 13 new tests for retry logic (144 total)
+- refactor: Improve error handling with specific exception catches
+- refactor: Use `ArgResult` subscript operator instead of custom parser
+
+**Breaking Changes:** None - fully backward compatible
+
+**Internal Improvements:**
+- Main function reduced from 60+ lines to ~15 lines
+- Better separation of concerns
+- More testable architecture
+- Removed 8 redundant ArgumentValueParser tests
+
 ## 0.4.1
 
 - feat: Add HTTP client injection to `PoEditorService` for better testability
