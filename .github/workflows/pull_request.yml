@@ -111,18 +111,7 @@ jobs:
         run: dart pub get
       
       - name: Run tests
-        run: |
-          dart test --reporter=json > test-results-${{ matrix.sdk }}.json || true
-          dart test
-      
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Test Results - Dart ${{ matrix.sdk }}
-          path: test-results-${{ matrix.sdk }}.json
-          reporter: dart-json
-          fail-on-error: true
+        run: dart test --reporter=github
   
   coverage:
     name: Test Coverage
