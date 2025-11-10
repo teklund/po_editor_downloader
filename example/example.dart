@@ -67,15 +67,15 @@ void main() async {
   print('To actually download translations, uncomment the code below');
   print('and replace with your real API token and project ID:');
   print('');
-  print('  final service = PoEditorService(basicConfig);');
-  print('  await service.downloadTranslations();');
+  print('  final downloader = TranslationDownloader(config: basicConfig);');
+  print('  await downloader.downloadTranslations();');
   print('');
 
   // Uncomment to actually download (requires valid credentials):
   /*
-  final service = PoEditorService(basicConfig);
+  final downloader = TranslationDownloader(config: basicConfig);
   try {
-    await service.downloadTranslations();
+    await downloader.downloadTranslations();
     print('✅ Download completed successfully!');
   } on PoEditorException catch (e) {
     print('❌ Error: ${e.message}');

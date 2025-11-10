@@ -2,53 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.2
+
+- fix: resolve 10-second hang after CLI execution by properly closing HTTP client connections
+- fix: improve resource cleanup to prevent lingering network connections
+- docs: update example documentation to reflect current API usage
+
 ## 1.0.1
 
-### Documentation
-
-- Added comprehensive library documentation with usage examples
-- Created `example/` directory with working code examples
-- Added `example/README.md` with detailed instructions
-- Fixes pub.dev score issues (missing documentation and example)
+- docs: add comprehensive library documentation with usage examples
+- docs: create `example/` directory with working code examples
+- docs: add `example/README.md` with detailed instructions
+- fix: resolve pub.dev score issues (missing documentation and example)
 
 ## 1.0.0
 
-### New Features
-
-#### YAML Configuration Support
-
-- Configure project settings in your `pubspec.yaml` instead of passing CLI arguments every time
-- Store API token securely in `PO_EDITOR_API_TOKEN` environment variable
-- Use custom config files with `--config` option
-- Configuration priority: CLI arguments > Environment variables > YAML config > Defaults
-
-#### Progress Indicators & Verbosity Control
-
-- See download progress for each language file: "⏳ Downloading en.arb (1/5)..."
-- Color-coded output: ✅ success, ⚠️ warnings, ❌ errors
-- `--quiet` mode for CI/CD (only show errors)
-- `--verbose` mode for debugging (show detailed information)
-- Success summary when complete
-
-#### Improved Reliability
-
-- Automatic retry with exponential backoff for transient failures (network issues, server errors)
-- Automatic creation of output directory if it doesn't exist
-- Better error messages with detailed information when something goes wrong
-
-#### Custom Filename Patterns
-
-- Customize ARB file naming with `filename_pattern` option
-- Use `{locale}` placeholder for language code
-- Examples: `{locale}.arb`, `intl_{locale}.arb`, `translations_{locale}.arb`
-- Default pattern: `app_{locale}.arb` (maintains backward compatibility)
-
-### Improvements
-
-- All CLI arguments are now optional when using YAML configuration
-- Security warning if API token is found in YAML files (use environment variable instead)
-
-**Breaking Changes:** None - fully backward compatible with existing CLI usage
+- feat: add YAML configuration support in `pubspec.yaml`
+- feat: add `PO_EDITOR_API_TOKEN` environment variable support
+- feat: add custom config files with `--config` option
+- feat: implement configuration priority (CLI > Environment > YAML > Defaults)
+- feat: add progress indicators for each language download
+- feat: add color-coded output (✅ success, ⚠️ warnings, ❌ errors)
+- feat: add `--quiet` mode for CI/CD
+- feat: add `--verbose` mode for debugging
+- feat: add automatic retry with exponential backoff for transient failures
+- feat: add automatic output directory creation
+- feat: add custom filename patterns with `{locale}` placeholder
+- feat: make all CLI arguments optional when using YAML configuration
+- feat: add security warning if API token is found in YAML files
+- improve: enhance error messages with detailed information
 
 ## 0.3.0
 

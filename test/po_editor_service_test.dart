@@ -8,31 +8,18 @@ import 'package:test/test.dart';
 
 void main() {
   group('PoEditorService with HTTP Client Injection', () {
-    test('should use default client when none is provided', () {
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-      );
-
-      expect(service.client, isNotNull);
-      expect(service.client, isA<http.Client>());
-    });
-
-    test('should use injected client when provided', () {
+    test('should require client parameter', () {
       final mockClient = MockClient((request) async {
         return http.Response('{"result": {"languages": []}}', 200);
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
+      expect(service.client, isNotNull);
       expect(service.client, equals(mockClient));
     });
 
@@ -48,11 +35,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       final languages = await service.getLanguages();
@@ -76,11 +61,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       final language = Language(
@@ -103,11 +86,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'invalid_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       expect(
@@ -130,11 +111,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: 'invalid_id',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       expect(
@@ -149,11 +128,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       expect(
@@ -168,11 +145,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       try {
@@ -191,11 +166,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       expect(
@@ -219,11 +192,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       expect(
@@ -242,11 +213,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       final language = Language(
@@ -278,11 +247,9 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
       );
 
       final language = Language(
@@ -321,11 +288,10 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
         tags: 'mobile,ios',
-        filters: null,
-        client: mockClient,
       );
 
       final language = Language(
@@ -360,11 +326,10 @@ void main() {
       });
 
       final service = PoEditorService(
+        client: mockClient,
         apiToken: 'test_token',
         projectId: '12345',
-        tags: null,
         filters: 'translated',
-        client: mockClient,
       );
 
       final language = Language(
