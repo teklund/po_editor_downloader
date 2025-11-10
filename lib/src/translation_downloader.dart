@@ -31,14 +31,19 @@ class TranslationDownloader {
   /// Logger for progress and status messages
   final Logger logger;
 
+  /// HTTP client for making requests (created if not provided)
+  final http.Client? _client;
+
   /// Creates a new translation downloader
   ///
   /// [config] - Required configuration including API token and project ID
   /// [logger] - Optional logger for output (defaults to normal verbosity)
+  /// [client] - Optional HTTP client (primarily for testing, created automatically if not provided)
   TranslationDownloader({
     required this.config,
     this.logger = const Logger(LogLevel.normal),
-  });
+    http.Client? client,
+  }) : _client = client;
 
   /// Download translations for all languages in a project
   Future<void> downloadTranslations() async {
@@ -51,7 +56,8 @@ class TranslationDownloader {
     logger.debug('Ensuring output directory exists: $filesPath');
     await _ensureOutputDirectory(filesPath);
 
-    final client = http.Client();
+    final client = _client ?? http.Client();
+    final ownsClient = _client == null;
     try {
       final service = PoEditorService(
         client: client,
@@ -106,7 +112,9 @@ class TranslationDownloader {
       logger.success(
           'Done! Downloaded ${languages.length} language(s) to $filesPath');
     } finally {
-      client.close();
+      if (ownsClient) {
+        client.close();
+      }
     }
   }
 
