@@ -164,8 +164,6 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
   return mergedConfig;
 }
 
-
-
 Future<void> main(List<String> arguments) async {
   try {
     // Determine log level by checking for flags in arguments
@@ -182,7 +180,7 @@ Future<void> main(List<String> arguments) async {
     final logger = Logger(logLevel);
 
     final config = await loadConfiguration(arguments);
-    
+
     final downloader = TranslationDownloader(config: config, logger: logger);
     await downloader.downloadTranslations();
   } on ConfigurationException catch (e) {
