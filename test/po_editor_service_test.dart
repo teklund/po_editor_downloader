@@ -6,54 +6,56 @@ import 'package:http/testing.dart';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
 import 'package:test/test.dart';
 
+// Test constants
+const _testApiToken = 'test_token';
+const _testProjectId = '12345';
+
+// Test data
+final _testLanguage = Language(
+  name: 'English',
+  code: 'en',
+  translations: 100,
+  percentage: 100,
+  updated: '2024-01-01',
+);
+
+const _testLanguagesResponse =
+    '{"result": {"languages": [{"name": "English", "code": "en", "translations": 100, "percentage": 100, "updated": "2024-01-01"}]}}';
+
+// Helper function to create a service with standard test values
+PoEditorService _createService(MockClient client,
+    {String? apiToken, String? projectId, String? tags, String? filters}) {
+  return PoEditorService(
+    client: client,
+    apiToken: apiToken ?? _testApiToken,
+    projectId: projectId ?? _testProjectId,
+    tags: tags,
+    filters: filters,
+  );
+}
+
 void main() {
   group('PoEditorService with HTTP Client Injection', () {
-    test('should use default client when none is provided', () {
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-      );
-
-      expect(service.client, isNotNull);
-      expect(service.client, isA<http.Client>());
-    });
-
-    test('should use injected client when provided', () {
+    test('should require client parameter', () {
       final mockClient = MockClient((request) async {
         return http.Response('{"result": {"languages": []}}', 200);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
+      expect(service.client, isNotNull);
       expect(service.client, equals(mockClient));
     });
 
     test('should successfully fetch languages with mocked client', () async {
       final mockClient = MockClient((request) async {
         if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 100, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
+          return http.Response(_testLanguagesResponse, 200);
         }
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
       final languages = await service.getLanguages();
       expect(languages, hasLength(1));
@@ -75,23 +77,9 @@ void main() {
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
-      final language = Language(
-        name: 'English',
-        code: 'en',
-        translations: 100,
-        percentage: 100,
-        updated: '2024-01-01',
-      );
-
-      final translations = await service.getTranslations(language);
+      final translations = await service.getTranslations(_testLanguage);
       expect(translations, containsPair('hello', 'Hello World'));
     });
   });
@@ -102,13 +90,7 @@ void main() {
         return http.Response('{"error": "Invalid API token"}', 401);
       });
 
-      final service = PoEditorService(
-        apiToken: 'invalid_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient, apiToken: 'invalid_token');
 
       expect(
         () => service.getLanguages(),
@@ -129,13 +111,7 @@ void main() {
         return http.Response('{"error": "Project not found"}', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: 'invalid_id',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient, projectId: 'invalid_id');
 
       expect(
         () => service.getLanguages(),
@@ -148,13 +124,7 @@ void main() {
         return http.Response('Internal Server Error', 500);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
       expect(
         () => service.getLanguages(),
@@ -167,13 +137,7 @@ void main() {
         return http.Response('{"error": "Detailed error message"}', 400);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
       try {
         await service.getLanguages();
@@ -190,13 +154,7 @@ void main() {
         throw const SocketException('Network unreachable');
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
       expect(
         () => service.getLanguages(),
@@ -218,13 +176,7 @@ void main() {
         throw TimeoutException('Request timeout');
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient);
 
       expect(
         () => service.getLanguages(),
@@ -241,24 +193,10 @@ void main() {
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
-
-      final language = Language(
-        name: 'English',
-        code: 'en',
-        translations: 100,
-        percentage: 100,
-        updated: '2024-01-01',
-      );
+      final service = _createService(mockClient);
 
       expect(
-        () => service.getTranslations(language),
+        () => service.getTranslations(_testLanguage),
         throwsA(isA<PoEditorApiException>()),
       );
     });
@@ -277,24 +215,10 @@ void main() {
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: null,
-        client: mockClient,
-      );
-
-      final language = Language(
-        name: 'English',
-        code: 'en',
-        translations: 100,
-        percentage: 100,
-        updated: '2024-01-01',
-      );
+      final service = _createService(mockClient);
 
       try {
-        await service.getTranslations(language);
+        await service.getTranslations(_testLanguage);
         fail('Should have thrown PoEditorApiException');
       } on PoEditorApiException catch (e) {
         expect(e.message, contains('Failed to download export file'));
@@ -320,23 +244,9 @@ void main() {
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: 'mobile,ios',
-        filters: null,
-        client: mockClient,
-      );
+      final service = _createService(mockClient, tags: 'mobile,ios');
 
-      final language = Language(
-        name: 'English',
-        code: 'en',
-        translations: 100,
-        percentage: 100,
-        updated: '2024-01-01',
-      );
-
-      await service.getTranslations(language);
+      await service.getTranslations(_testLanguage);
       expect(capturedBody, contains('tags'));
       // URL encoded comma: %2C
       expect(capturedBody,
@@ -359,23 +269,9 @@ void main() {
         return http.Response('Not found', 404);
       });
 
-      final service = PoEditorService(
-        apiToken: 'test_token',
-        projectId: '12345',
-        tags: null,
-        filters: 'translated',
-        client: mockClient,
-      );
+      final service = _createService(mockClient, filters: 'translated');
 
-      final language = Language(
-        name: 'English',
-        code: 'en',
-        translations: 100,
-        percentage: 100,
-        updated: '2024-01-01',
-      );
-
-      await service.getTranslations(language);
+      await service.getTranslations(_testLanguage);
       expect(capturedBody, contains('filters'));
       expect(capturedBody, contains('translated'));
     });

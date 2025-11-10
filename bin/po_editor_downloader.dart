@@ -1,10 +1,8 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
 import 'package:po_editor_downloader/src/logger.dart';
-import 'package:po_editor_downloader/src/retry_helper.dart';
 
 const apiTokenOption = 'api_token';
 const projectIdOption = 'project_id';
@@ -12,41 +10,7 @@ const tagsOption = 'tags';
 const filtersOption = 'filters';
 const filesPathOption = 'files_path';
 const filenamePatternOption = 'filename_pattern';
-const addMetaDataOption = 'add_metadata';
-const defaultFilesPath = 'lib/l10n/';
-const defaultFilenamePattern = 'app_{locale}.arb';
-
-/// Ensure the output directory exists and is writable
-Future<void> ensureOutputDirectory(String path) async {
-  final dir = Directory(path);
-
-  // Create directory if it doesn't exist
-  if (!await dir.exists()) {
-    print('Creating output directory: $path');
-    try {
-      await dir.create(recursive: true);
-    } catch (e) {
-      throw Exception(
-        'Failed to create output directory: $path\n'
-        'Error: $e',
-      );
-    }
-  }
-
-  // Test if directory is writable
-  try {
-    final testFile = File(
-        '${dir.path}/.write_test_${DateTime.now().millisecondsSinceEpoch}');
-    await testFile.writeAsString('test');
-    await testFile.delete();
-  } catch (e) {
-    throw Exception(
-      'Output directory is not writable: $path\n'
-      'Error: $e\n'
-      'Please check directory permissions.',
-    );
-  }
-}
+const addMetadataOption = 'add_metadata';
 
 /// Load configuration from multiple sources with priority:
 /// 1. Command-line arguments (highest)
@@ -87,7 +51,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
           'Filename pattern for ARB files. Use {locale} as placeholder (default: $defaultFilenamePattern)',
     )
     ..addOption(
-      addMetaDataOption,
+      addMetadataOption,
       mandatory: false,
       help: 'Include metadata in ARB files (true/false)',
     )
@@ -168,7 +132,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     'filters': result[filtersOption],
     'files_path': result[filesPathOption],
     'filename_pattern': result[filenamePatternOption],
-    'add_metadata': result[addMetaDataOption],
+    'add_metadata': result[addMetadataOption],
   });
 
   // 2. Read from environment variables
@@ -200,114 +164,6 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
   return mergedConfig;
 }
 
-/// Download translations for all languages in a project
-Future<void> downloadTranslations(
-  PoEditorConfig config, {
-  Logger logger = const Logger(LogLevel.normal),
-}) async {
-  final filesPath = config.filesPath ?? defaultFilesPath;
-  if (config.filesPath == null) {
-    logger.info('No "files_path" specified, will default to $defaultFilesPath');
-  }
-
-  // Ensure output directory exists and is writable
-  logger.debug('Ensuring output directory exists: $filesPath');
-  await ensureOutputDirectory(filesPath);
-
-  final service = PoEditorService(
-    apiToken: config.apiToken!,
-    projectId: config.projectId!,
-    tags: config.tags,
-    filters: config.filters,
-  );
-
-  // Fetch languages with retry logic
-  logger.progress('Downloading translations...');
-  final languages = await withRetry(
-    () => service.getLanguages(),
-    onRetry: (attempt, delay, error) {
-      logger.warning(
-          'Retry $attempt/3 after ${delay.inSeconds}s (${error.toString().split('\n').first})');
-    },
-  );
-
-  logger.info('Found ${languages.length} language(s)');
-
-  int completed = 0;
-  for (final language in languages) {
-    completed++;
-    logger.info(
-        '[$completed/${languages.length}] ${language.name} (${language.code})...');
-
-    // Fetch translations with retry logic
-    final translations = await withRetry(
-      () => service.getTranslations(language),
-      onRetry: (attempt, delay, error) {
-        logger.warning(
-            'Retry $attempt/3 for ${language.code} after ${delay.inSeconds}s');
-      },
-    ).then(
-      (value) {
-        return value.map(
-          (key, value) {
-            return MapEntry(ReCase(key).toCamelCase(), value);
-          },
-        );
-      },
-    );
-
-    await writeArbFile(
-      language: language,
-      translations: translations,
-      outputPath: filesPath,
-      includeMetadata: config.addMetadata,
-      filenamePattern: config.filenamePattern ?? defaultFilenamePattern,
-      logger: logger,
-    );
-  }
-
-  logger.success(
-      'Done! Downloaded ${languages.length} language(s) to $filesPath');
-}
-
-/// Write an ARB file for a specific language
-Future<void> writeArbFile({
-  required Language language,
-  required Map<String, dynamic> translations,
-  required String outputPath,
-  bool? includeMetadata,
-  String filenamePattern = defaultFilenamePattern,
-  Logger logger = const Logger(LogLevel.normal),
-}) async {
-  final Map<String, dynamic> translationResult = {};
-
-  // Add metadata if requested
-  if (includeMetadata == true) {
-    final metadata = <String, dynamic>{
-      '@@locale': language.code,
-      '@@updated': language.updated,
-      '@@language': language.name,
-      '@@percentage': '${language.percentage}',
-    };
-    translationResult.addAll(metadata);
-    logger.debug('Added metadata for ${language.code}');
-  }
-
-  // Add translations
-  translationResult.addAll(translations);
-
-  // Generate filename from pattern
-  final filename = filenamePattern.replaceAll('{locale}', language.code);
-
-  // Format and write file
-  final encoder = JsonEncoder.withIndent("    ");
-  final arbText = encoder.convert(translationResult);
-  final file = File('$outputPath/$filename');
-  await file.writeAsString(arbText);
-
-  logger.success('Saved: $filename (${translations.length} terms)');
-}
-
 Future<void> main(List<String> arguments) async {
   try {
     // Determine log level by checking for flags in arguments
@@ -324,7 +180,9 @@ Future<void> main(List<String> arguments) async {
     final logger = Logger(logLevel);
 
     final config = await loadConfiguration(arguments);
-    await downloadTranslations(config, logger: logger);
+
+    final downloader = TranslationDownloader(config: config, logger: logger);
+    await downloader.downloadTranslations();
   } on ConfigurationException catch (e) {
     stderr.writeln('\n❌ Configuration Error:\n${e.message}');
     exit(1);

@@ -34,6 +34,9 @@ coverage/
 test/.test_coverage.dart
 .test_coverage.dart
 
+# Test artifacts - ARB files created during test execution
+lib/l10n/
+
 # Code generation artifacts
 *.g.dart
 *.freezed.dart

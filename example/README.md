@@ -15,7 +15,7 @@ The example demonstrates:
 1. **Basic Configuration** - Creating a simple configuration with minimal settings
 2. **Advanced Configuration** - Using filtering options (tags, filters) and custom filename patterns
 3. **YAML Configuration** - Reading configuration from `pubspec.yaml`
-4. **Downloading Translations** - How to use the `PoEditorService` to download translations
+4. **Downloading Translations** - How to use `TranslationDownloader` to download translations
 5. **String Utilities** - Using the `ReCase` utility for string transformations
 
 ## Before Running
@@ -32,6 +32,7 @@ To actually download translations, you'll need to:
 To integrate into your own project:
 
 ```dart
+import 'dart:io';
 import 'package:po_editor_downloader/po_editor_downloader.dart';
 
 void main() async {
@@ -41,8 +42,8 @@ void main() async {
     filesPath: 'lib/l10n/',
   );
 
-  final service = PoEditorService(config);
-  await service.downloadTranslations();
+  final downloader = TranslationDownloader(config: config);
+  await downloader.downloadTranslations();
 }
 ```
 

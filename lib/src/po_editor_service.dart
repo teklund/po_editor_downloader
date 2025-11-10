@@ -21,17 +21,38 @@ class PoEditorService {
   /// (optional) Filters for terms
   final String? filters;
 
-  /// HTTP client for making requests (injectable for testing)
+  /// HTTP client for making requests
+  ///
+  /// The caller is responsible for creating and closing this client.
+  /// This makes lifecycle management explicit and clear.
   final http.Client client;
 
   /// Construct POEditor Service
+  ///
+  /// [client] - Required HTTP client. The caller is responsible for closing it
+  /// when done. This makes lifecycle management explicit.
+  ///
+  /// Example:
+  /// ```dart
+  /// final client = http.Client();
+  /// try {
+  ///   final service = PoEditorService(
+  ///     client: client,
+  ///     apiToken: 'token',
+  ///     projectId: '123',
+  ///   );
+  ///   // use service...
+  /// } finally {
+  ///   client.close();
+  /// }
+  /// ```
   PoEditorService({
+    required this.client,
     required this.apiToken,
     required this.projectId,
-    required this.tags,
-    required this.filters,
-    http.Client? client,
-  }) : client = client ?? http.Client();
+    this.tags,
+    this.filters,
+  });
 
   /// Get Languages for project
   Future<List<Language>> getLanguages() async {
