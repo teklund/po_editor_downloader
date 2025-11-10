@@ -350,7 +350,8 @@ void main() {
 
       expect(capturedBody, isNotNull);
       expect(capturedBody, contains('tags'));
-      expect(capturedBody, anyOf(contains('mobile,ios'), contains('mobile%2Cios')));
+      expect(capturedBody,
+          anyOf(contains('mobile,ios'), contains('mobile%2Cios')));
     });
 
     test('should apply filters to export request', () async {
