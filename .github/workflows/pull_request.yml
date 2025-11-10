@@ -6,11 +6,19 @@ on:
   push:
     branches: [ main, master ]
 
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: po_editor_downloader_${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
-  analyze:
-    name: Analyze Code
+  format:
+    name: Check Formatting
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,22 +26,66 @@ jobs:
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
-          sdk: 3.4.0
+          sdk: stable
+      
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
       
       - name: Install dependencies
         run: dart pub get
       
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
+
+  analyze:
+    name: Analyze Code (${{ matrix.sdk }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: format
+    strategy:
+      fail-fast: true
+      matrix:
+        sdk: ['3.4.0', 'stable']
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Dart ${{ matrix.sdk }}
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ matrix.sdk }}
+      
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-${{ matrix.sdk }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.sdk }}-pub-
+            ${{ runner.os }}-pub-
+      
+      - name: Install dependencies
+        run: dart pub get
       
       - name: Analyze project
-        run: dart analyze --fatal-infos
+        uses: invertase/github-action-dart-analyzer@v3
+        with:
+          fatal-infos: true
+          fatal-warnings: true
+          annotate-only: ${{ matrix.sdk != '3.4.0' }}
 
   test:
-    name: Run Tests
+    name: Run Tests (${{ matrix.sdk }})
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 15
+    needs: analyze
     strategy:
+      fail-fast: true
       matrix:
         sdk: ['3.4.0', 'stable']
     
@@ -46,15 +98,26 @@ jobs:
         with:
           sdk: ${{ matrix.sdk }}
       
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-${{ matrix.sdk }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.sdk }}-pub-
+            ${{ runner.os }}-pub-
+      
       - name: Install dependencies
         run: dart pub get
       
       - name: Run tests
-        run: dart test
+        run: dart test --reporter=github
   
   coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: test
     
     steps:
       - name: Checkout code
@@ -64,6 +127,15 @@ jobs:
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
+      
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-stable-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-stable-pub-
+            ${{ runner.os }}-pub-
       
       - name: Install dependencies
         run: dart pub get
@@ -71,11 +143,10 @@ jobs:
       - name: Run tests with coverage
         run: dart test --coverage=coverage
       
-      - name: Install coverage tools
-        run: dart pub global activate coverage
-      
-      - name: Format coverage
-        run: dart pub global run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
+      - name: Install and format coverage
+        run: |
+          dart pub global activate coverage
+          dart pub global run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
       
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
@@ -83,10 +154,14 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           fail_ci_if_error: false
+          flags: unittests
+          name: dart-coverage
 
   publish-dry-run:
     name: Publish Dry Run
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze
     
     steps:
       - name: Checkout code
@@ -97,8 +172,51 @@ jobs:
         with:
           sdk: stable
       
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+      
       - name: Install dependencies
         run: dart pub get
       
       - name: Validate package
         run: dart pub publish --dry-run
+
+  pana:
+    name: Pub Score Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: analyze
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Dart
+        uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      
+      - name: Cache Dart dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+      
+      - name: Install dependencies
+        run: dart pub get
+      
+      - name: Install pana
+        run: dart pub global activate pana
+      
+      - name: Run pana
+        run: |
+          dart pub global run pana --no-warning | tee pana-output.txt
+          echo "## Pana Score" >> $GITHUB_STEP_SUMMARY
+          cat pana-output.txt >> $GITHUB_STEP_SUMMARY

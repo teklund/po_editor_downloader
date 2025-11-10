@@ -67,7 +67,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Commit Messages
 
-Follow conventional commit format:
+Follow conventional commit format for both **commit messages** and **pull request titles**:
 
 - `feat:` for new features
 - `fix:` for bug fixes
@@ -75,6 +75,10 @@ Follow conventional commit format:
 - `test:` for adding/updating tests
 - `refactor:` for code refactoring
 - `style:` for formatting changes
+- `chore:` for maintenance tasks
+- `ci:` for CI/CD changes
+- `perf:` for performance improvements
+- `build:` for build system changes
 
 Example:
 
@@ -85,6 +89,8 @@ feat: add support for filtering by multiple tags
 - Update argument parser to handle array format
 - Add validation for tag format
 ```
+
+> **Note:** Pull request titles are automatically validated to ensure they follow this format.
 
 ## Testing
 
