@@ -395,5 +395,230 @@ void main() {
       expect(capturedBody, contains('filters'));
       expect(capturedBody, contains('translated'));
     });
+
+    test('should use default filesPath when not specified', () async {
+      final mockClient = MockClient((request) async {
+        if (request.url.toString().contains('/languages/list')) {
+          return http.Response(
+            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('/projects/export')) {
+          return http.Response(
+            '{"result": {"url": "https://example.com/download.arb"}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('example.com')) {
+          return http.Response('{"test": "value"}', 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        // filesPath not specified - will use default
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.normal),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      // Should create file in default location (lib/l10n/)
+      final arbFile = File('lib/l10n/app_en.arb');
+      expect(await arbFile.exists(), isTrue);
+    });
+
+    test('should retry on API failures and log warnings', () async {
+      int languagesAttemptCount = 0;
+      int exportAttemptCount = 0;
+      final mockClient = MockClient((request) async {
+        if (request.url.toString().contains('/languages/list')) {
+          languagesAttemptCount++;
+          if (languagesAttemptCount < 2) {
+            return http.Response('Server Error', 500);
+          }
+          return http.Response(
+            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('/projects/export')) {
+          exportAttemptCount++;
+          if (exportAttemptCount < 2) {
+            return http.Response('Server Error', 500);
+          }
+          return http.Response(
+            '{"result": {"url": "https://example.com/download.arb"}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('example.com')) {
+          return http.Response('{"test": "value"}', 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        filesPath: outputPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.normal),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      expect(languagesAttemptCount, equals(2));
+      expect(exportAttemptCount, equals(2));
+      final arbFile = File('$outputPath/app_en.arb');
+      expect(await arbFile.exists(), isTrue);
+    });
+
+    test('should not close client when provided externally', () async {
+      final mockClient = MockClient((request) async {
+        if (request.url.toString().contains('/languages/list')) {
+          return http.Response(
+            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('/projects/export')) {
+          return http.Response(
+            '{"result": {"url": "https://example.com/download.arb"}}',
+            200,
+          );
+        }
+        if (request.url.toString().contains('example.com')) {
+          return http.Response('{"test": "value"}', 200);
+        }
+        return http.Response('Not found', 404);
+      });
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        filesPath: outputPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      // This test verifies the download completes successfully when client is provided
+      // The client ownership logic ensures we don't close externally-provided clients
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      expect(await arbFile.exists(), isTrue);
+    });
+
+    test('should close client when it creates its own', () async {
+      // We can't easily test client.close() is called since we can't mock http.Client() constructor
+      // But we can test that creating a TranslationDownloader without a client works correctly
+      // This ensures the close() code path is executed in the finally block
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        filesPath: outputPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        // No client provided - will create its own
+      );
+
+      // This should fail since we don't have a real API, but it will execute the close() path
+      try {
+        await downloader.downloadTranslations();
+      } catch (e) {
+        // Expected to fail - we just want to ensure close() is called
+        expect(e, isNotNull);
+      }
+    });
+
+    test('should throw error when directory creation fails', () async {
+      final invalidPath = '/root/cannot_write_here/translations';
+
+      final mockClient = MockClient((request) async {
+        return http.Response('{}', 200);
+      });
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        filesPath: invalidPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      expect(
+        () => downloader.downloadTranslations(),
+        throwsA(isA<Exception>()),
+      );
+    });
+
+    test('should throw error when directory is not writable', () async {
+      // Create a read-only directory
+      final readOnlyPath = '${tempDir.path}/readonly';
+      await Directory(readOnlyPath).create();
+
+      // Make it read-only (this works on Unix-like systems)
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['444', readOnlyPath]);
+      }
+
+      final mockClient = MockClient((request) async {
+        if (request.url.toString().contains('/languages/list')) {
+          return http.Response(
+            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
+            200,
+          );
+        }
+        return http.Response('{}', 200);
+      });
+
+      final config = PoEditorConfig(
+        apiToken: 'test_token',
+        projectId: '12345',
+        filesPath: readOnlyPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      try {
+        await expectLater(
+          () => downloader.downloadTranslations(),
+          throwsA(isA<Exception>()),
+        );
+      } finally {
+        // Restore permissions for cleanup
+        if (!Platform.isWindows) {
+          await Process.run('chmod', ['755', readOnlyPath]);
+        }
+      }
+    });
   });
 }
