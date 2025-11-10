@@ -73,8 +73,11 @@ jobs:
         run: dart pub get
       
       - name: Analyze project
-        continue-on-error: ${{ matrix.sdk != '3.4.0' }}
-        run: dart analyze --fatal-infos
+        uses: invertase/github-action-dart-analyzer@v3
+        with:
+          fatal-infos: true
+          fatal-warnings: true
+          annotate-only: ${{ matrix.sdk != '3.4.0' }}
 
   test:
     name: Run Tests - Dart ${{ matrix.sdk }}
@@ -108,7 +111,18 @@ jobs:
         run: dart pub get
       
       - name: Run tests
-        run: dart test
+        run: |
+          dart test --reporter=json > test-results-${{ matrix.sdk }}.json || true
+          dart test
+      
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results - Dart ${{ matrix.sdk }}
+          path: test-results-${{ matrix.sdk }}.json
+          reporter: dart-json
+          fail-on-error: true
   
   coverage:
     name: Test Coverage
