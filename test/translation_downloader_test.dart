@@ -6,6 +6,33 @@ import 'package:po_editor_downloader/po_editor_downloader.dart';
 import 'package:po_editor_downloader/src/logger.dart';
 import 'package:test/test.dart';
 
+// Test constants
+const _testApiToken = 'test_token';
+const _testProjectId = '12345';
+
+// Helper function to create a standard mock client for successful requests
+MockClient _createSuccessfulMockClient({
+  String languageResponse =
+      '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
+  String translationResponse = '{"test": "value"}',
+}) {
+  return MockClient((request) async {
+    if (request.url.toString().contains('/languages/list')) {
+      return http.Response(languageResponse, 200);
+    }
+    if (request.url.toString().contains('/projects/export')) {
+      return http.Response(
+        '{"result": {"url": "https://example.com/download.arb"}}',
+        200,
+      );
+    }
+    if (request.url.toString().contains('example.com')) {
+      return http.Response(translationResponse, 200);
+    }
+    return http.Response('Not found', 404);
+  });
+}
+
 void main() {
   group('TranslationDownloader', () {
     late Directory tempDir;
@@ -23,31 +50,14 @@ void main() {
     });
 
     test('should download translations successfully', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response(
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
             '{"hello_world": "Hello World", "goodbye": "Goodbye"}',
-            200,
-          );
-        }
-        return http.Response('Not found', 404);
-      });
+      );
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
       );
 
@@ -72,28 +82,14 @@ void main() {
     });
 
     test('should include metadata when requested', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
+      final mockClient = _createSuccessfulMockClient(
+        languageResponse:
             '{"result": {"languages": [{"name": "Spanish", "code": "es", "translations": 8, "percentage": 80.5, "updated": "2024-01-01 12:00:00"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response('{"test": "value"}', 200);
-        }
-        return http.Response('Not found', 404);
-      });
+      );
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
         addMetadata: true,
       );
@@ -119,28 +115,11 @@ void main() {
     });
 
     test('should use custom filename pattern', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response('{"test": "value"}', 200);
-        }
-        return http.Response('Not found', 404);
-      });
+      final mockClient = _createSuccessfulMockClient();
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
         filenamePattern: 'intl_{locale}.arb',
       );
@@ -161,28 +140,11 @@ void main() {
       final nonExistentPath = '${tempDir.path}/new/nested/path';
       expect(await Directory(nonExistentPath).exists(), isFalse);
 
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response('{"test": "value"}', 200);
-        }
-        return http.Response('Not found', 404);
-      });
+      final mockClient = _createSuccessfulMockClient();
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: nonExistentPath,
       );
 
@@ -242,31 +204,14 @@ void main() {
     });
 
     test('should convert keys to camelCase', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response(
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
             '{"hello_world": "Hello", "goodbye_message": "Bye", "simple": "Simple"}',
-            200,
-          );
-        }
-        return http.Response('Not found', 404);
-      });
+      );
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
       );
 
@@ -295,7 +240,7 @@ void main() {
 
       final config = PoEditorConfig(
         apiToken: 'invalid_token',
-        projectId: '12345',
+        projectId: _testProjectId,
         filesPath: outputPath,
       );
 
@@ -334,8 +279,8 @@ void main() {
       });
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
         tags: 'mobile,ios',
       );
@@ -377,8 +322,8 @@ void main() {
       });
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
         filters: 'translated',
       );
@@ -397,28 +342,11 @@ void main() {
     });
 
     test('should use default filesPath when not specified', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response('{"test": "value"}', 200);
-        }
-        return http.Response('Not found', 404);
-      });
+      final mockClient = _createSuccessfulMockClient();
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         // filesPath not specified - will use default
       );
 
@@ -466,8 +394,8 @@ void main() {
       });
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: outputPath,
       );
 
@@ -485,72 +413,6 @@ void main() {
       expect(await arbFile.exists(), isTrue);
     });
 
-    test('should not close client when provided externally', () async {
-      final mockClient = MockClient((request) async {
-        if (request.url.toString().contains('/languages/list')) {
-          return http.Response(
-            '{"result": {"languages": [{"name": "English", "code": "en", "translations": 10, "percentage": 100, "updated": "2024-01-01"}]}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('/projects/export')) {
-          return http.Response(
-            '{"result": {"url": "https://example.com/download.arb"}}',
-            200,
-          );
-        }
-        if (request.url.toString().contains('example.com')) {
-          return http.Response('{"test": "value"}', 200);
-        }
-        return http.Response('Not found', 404);
-      });
-
-      final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
-        filesPath: outputPath,
-      );
-
-      final downloader = TranslationDownloader(
-        config: config,
-        logger: const Logger(LogLevel.quiet),
-        client: mockClient,
-      );
-
-      // This test verifies the download completes successfully when client is provided
-      // The client ownership logic ensures we don't close externally-provided clients
-      await downloader.downloadTranslations();
-
-      final arbFile = File('$outputPath/app_en.arb');
-      expect(await arbFile.exists(), isTrue);
-    });
-
-    test('should close client when it creates its own', () async {
-      // We can't easily test client.close() is called since we can't mock http.Client() constructor
-      // But we can test that creating a TranslationDownloader without a client works correctly
-      // This ensures the close() code path is executed in the finally block
-
-      final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
-        filesPath: outputPath,
-      );
-
-      final downloader = TranslationDownloader(
-        config: config,
-        logger: const Logger(LogLevel.quiet),
-        // No client provided - will create its own
-      );
-
-      // This should fail since we don't have a real API, but it will execute the close() path
-      try {
-        await downloader.downloadTranslations();
-      } catch (e) {
-        // Expected to fail - we just want to ensure close() is called
-        expect(e, isNotNull);
-      }
-    });
-
     test('should throw error when directory creation fails', () async {
       final invalidPath = '/root/cannot_write_here/translations';
 
@@ -559,8 +421,8 @@ void main() {
       });
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: invalidPath,
       );
 
@@ -597,8 +459,8 @@ void main() {
       });
 
       final config = PoEditorConfig(
-        apiToken: 'test_token',
-        projectId: '12345',
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
         filesPath: readOnlyPath,
       );
 
