@@ -43,7 +43,7 @@ jobs:
         run: dart format --output=none --set-exit-if-changed .
 
   analyze:
-    name: Analyze Code - Dart ${{ matrix.sdk }}
+    name: Analyze Code (${{ matrix.sdk }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: format
@@ -80,7 +80,7 @@ jobs:
           annotate-only: ${{ matrix.sdk != '3.4.0' }}
 
   test:
-    name: Run Tests - Dart ${{ matrix.sdk }}
+    name: Run Tests (${{ matrix.sdk }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: analyze
