@@ -129,8 +129,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          key: ${{ runner.os }}-stable-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
+            ${{ runner.os }}-stable-pub-
             ${{ runner.os }}-pub-
       
       - name: Install dependencies
@@ -150,6 +151,8 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage/lcov.info
           fail_ci_if_error: false
+          flags: unittests
+          name: dart-coverage
 
   publish-dry-run:
     name: Publish Dry Run
@@ -210,4 +213,7 @@ jobs:
         run: dart pub global activate pana
       
       - name: Run pana
-        run: dart pub global run pana --no-warning
+        run: |
+          dart pub global run pana --no-warning | tee pana-output.txt
+          echo "## Pana Score" >> $GITHUB_STEP_SUMMARY
+          cat pana-output.txt >> $GITHUB_STEP_SUMMARY
