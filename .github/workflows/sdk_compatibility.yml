@@ -35,7 +35,7 @@ jobs:
           echo "version=$(dart --version 2>&1 | head -n 1)" >> $GITHUB_OUTPUT
       
       - name: Cache Dart dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-${{ matrix.sdk }}-pub-${{ hashFiles('**/pubspec.lock') }}
