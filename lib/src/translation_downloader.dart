@@ -60,7 +60,10 @@ class TranslationDownloader {
     final convention = config.namingConvention ?? NamingConvention.camelCase;
     if (convention == NamingConvention.none) {
       logger.info(
-          'Naming convention set to "none" — keys will not be converted.');
+        'Naming convention set to "none" — keys are used as-is from POEditor. '
+        'Ensure all keys are valid Dart identifiers if using Flutter gen-l10n or slang '
+        '(no hyphens, dots, spaces, slashes, or leading digits).',
+      );
     } else if (!convention.isDartCompatible) {
       logger.warning(
         'Naming convention "${convention.name}" produces keys that are not '
