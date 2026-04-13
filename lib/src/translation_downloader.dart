@@ -22,7 +22,7 @@ const defaultFilenamePattern = 'app_{locale}.arb';
 /// from POEditor, including:
 /// - Fetching available languages
 /// - Downloading translations for each language
-/// - Converting term keys to camelCase
+/// - Converting term keys to the configured naming convention
 /// - Writing ARB files with proper formatting
 /// - Managing HTTP client lifecycle
 class TranslationDownloader {
@@ -58,7 +58,10 @@ class TranslationDownloader {
     await _ensureOutputDirectory(filesPath);
 
     final convention = config.namingConvention ?? NamingConvention.camelCase;
-    if (!convention.isDartCompatible) {
+    if (convention == NamingConvention.none) {
+      logger.info(
+          'Naming convention set to "none" — keys will not be converted.');
+    } else if (!convention.isDartCompatible) {
       logger.warning(
         'Naming convention "${convention.name}" produces keys that are not '
         'valid Dart identifiers. This may cause issues with Flutter gen-l10n '
@@ -103,11 +106,22 @@ class TranslationDownloader {
           },
         ).then(
           (value) {
-            return value.map(
-              (key, value) {
-                return MapEntry(ReCase(key).convertTo(convention), value);
-              },
-            );
+            final result = <String, dynamic>{};
+            for (final entry in value.entries) {
+              final key = entry.key;
+              if (key.startsWith('@@')) {
+                // Global ARB metadata (@@locale, @@updated, etc.) — keep as-is
+                result[key] = entry.value;
+              } else if (key.startsWith('@')) {
+                // Per-key metadata (@keyName) — convert the base key and re-prefix
+                final baseKey = key.substring(1);
+                final convertedKey = ReCase(baseKey).convertTo(convention);
+                result['@$convertedKey'] = entry.value;
+              } else {
+                result[ReCase(key).convertTo(convention)] = entry.value;
+              }
+            }
+            return result;
           },
         );
 

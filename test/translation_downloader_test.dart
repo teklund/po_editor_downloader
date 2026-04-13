@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -289,6 +290,45 @@ void main() {
 
       expect(content, contains('hello-world'));
       expect(content, contains('goodbye-message'));
+    });
+
+    test('should preserve @-prefixed ARB metadata and convert base key',
+        () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse: '{'
+            '"error_bank_id_start_failed": "Failed",'
+            '"@error_bank_id_start_failed": {"description": "Error message", "type": "text"},'
+            '"@@locale": "en"'
+            '}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+      final arb = jsonDecode(content) as Map<String, dynamic>;
+
+      // Translation key should be converted
+      expect(arb.containsKey('errorBankIdStartFailed'), isTrue);
+      // @metadata key should be converted with @ prefix preserved
+      expect(arb.containsKey('@errorBankIdStartFailed'), isTrue);
+      // @@ global metadata should be preserved as-is
+      expect(arb.containsKey('@@locale'), isTrue);
+      // Original unconverted keys should not exist
+      expect(arb.containsKey('error_bank_id_start_failed'), isFalse);
+      expect(arb.containsKey('@error_bank_id_start_failed'), isFalse);
     });
 
     test('should throw PoEditorApiException on API error', () async {

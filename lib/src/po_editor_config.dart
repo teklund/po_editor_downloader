@@ -226,6 +226,8 @@ class PoEditorConfig {
     if (value == null) return null;
     if (value is! String) return null;
     switch (value.toLowerCase().replaceAll(RegExp(r'[\s-]'), '_')) {
+      case 'none' || 'off' || 'raw' || 'preserve':
+        return NamingConvention.none;
       case 'camelcase' || 'camel_case' || 'camel':
         return NamingConvention.camelCase;
       case 'pascalcase' || 'pascal_case' || 'pascal':

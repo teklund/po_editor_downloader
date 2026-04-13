@@ -1,5 +1,8 @@
 /// The supported naming conventions for string conversion.
 enum NamingConvention {
+  /// No conversion — keys are used as-is from POEditor
+  none,
+
   /// camelCase — e.g. `helloWorld`
   camelCase,
 
@@ -30,6 +33,7 @@ enum NamingConvention {
   /// are not valid Dart identifiers and will cause issues with Flutter
   /// gen-l10n or slang code generation.
   bool get isDartCompatible => switch (this) {
+        none => true,
         camelCase || pascalCase || snakeCase || constantCase => true,
         kebabCase || dotCase || titleCase || pathCase => false,
       };

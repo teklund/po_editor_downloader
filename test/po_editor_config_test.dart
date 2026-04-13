@@ -309,6 +309,10 @@ void main() {
 
       test('should parse all convention aliases', () {
         final aliases = {
+          'none': NamingConvention.none,
+          'off': NamingConvention.none,
+          'raw': NamingConvention.none,
+          'preserve': NamingConvention.none,
           'camelCase': NamingConvention.camelCase,
           'camel_case': NamingConvention.camelCase,
           'camel': NamingConvention.camelCase,
