@@ -225,24 +225,35 @@ class PoEditorConfig {
   static NamingConvention? _parseNamingConvention(dynamic value) {
     if (value == null) return null;
     if (value is! String) return null;
-    switch (value.toLowerCase().replaceAll(RegExp(r'[\s\-./]'), '_')) {
-      case 'none' || 'off' || 'raw' || 'preserve':
+    // Strip all separators, spaces and lowercase — so "dot.case", "dot_case",
+    // "dot case" and "dotCase" all normalise to "dotcase".
+    final normalized = value.toLowerCase().replaceAll(RegExp(r'[\s\-_./]'), '');
+
+    // First: match directly against enum names (e.g. "camelCase" → "camelcase").
+    // This means any future enum values are automatically supported.
+    for (final convention in NamingConvention.values) {
+      if (convention.name.toLowerCase() == normalized) return convention;
+    }
+
+    // Second: explicit aliases for common alternative names not covered above.
+    switch (normalized) {
+      case 'off' || 'raw' || 'preserve':
         return NamingConvention.none;
-      case 'camelcase' || 'camel_case' || 'camel':
+      case 'camel':
         return NamingConvention.camelCase;
-      case 'pascalcase' || 'pascal_case' || 'pascal':
+      case 'pascal':
         return NamingConvention.pascalCase;
-      case 'snakecase' || 'snake_case' || 'snake':
+      case 'snake':
         return NamingConvention.snakeCase;
-      case 'constantcase' || 'constant_case' || 'constant' || 'screaming_snake':
+      case 'constant' || 'screamingsnake':
         return NamingConvention.constantCase;
-      case 'kebabcase' || 'kebab_case' || 'kebab' || 'dash':
+      case 'kebab' || 'dash':
         return NamingConvention.kebabCase;
-      case 'dotcase' || 'dot_case' || 'dot':
+      case 'dot':
         return NamingConvention.dotCase;
-      case 'titlecase' || 'title_case' || 'title':
+      case 'title':
         return NamingConvention.titleCase;
-      case 'pathcase' || 'path_case' || 'path':
+      case 'path':
         return NamingConvention.pathCase;
       default:
         return null;
