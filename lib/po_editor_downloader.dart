@@ -41,6 +41,7 @@ library;
 
 export 'src/config_reader.dart';
 export 'src/language.dart';
+export 'src/naming_convention.dart';
 export 'src/po_editor_config.dart';
 export 'src/po_editor_exceptions.dart';
 export 'src/po_editor_service.dart';

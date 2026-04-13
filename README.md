@@ -12,7 +12,7 @@ A CLI tool for downloading and converting translations from [POEditor](https://p
 - 📥 Downloads translations from POEditor projects
 - 🔄 Converts POEditor exports to Flutter ARB format
 - 🏷️ Supports filtering by tags and translation status
-- 🔑 Converts translation keys to camelCase automatically
+- 🔑 Configurable naming convention for translation keys (camelCase, snake_case, none, etc.)
 - 📊 Optional metadata inclusion (locale, language, percentage, last updated)
 - 🎯 Generates separate ARB files per language (e.g., `app_en.arb`, `app_es.arb`)
 
@@ -49,6 +49,7 @@ po_editor:
   files_path: "lib/l10n/"
   filename_pattern: "app_{locale}.arb"
   add_metadata: true
+  naming_convention: camelCase  # none, camelCase, snake_case, PascalCase, CONSTANT_CASE, kebab-case, dot.case, Title Case, path/case
 ```
 
 **Security Note:** Never commit your API token to version control. Use environment variables or command-line arguments instead.
@@ -145,6 +146,7 @@ dart run po_editor_downloader --add_metadata=true
 | `files_path` | YAML or CLI | Output directory path | `lib/l10n/` |
 | `filename_pattern` | YAML or CLI | Filename pattern for ARB files. Use `{locale}` as placeholder (e.g., `{locale}.arb`, `intl_{locale}.arb`) | `app_{locale}.arb` |
 | `add_metadata` | YAML or CLI | Include metadata (locale, language name, percentage, last updated) in ARB files | `false` |
+| `naming_convention` | YAML or CLI | Naming convention for translation keys. Use `none` to keep keys as-is. Options: `none`, `camelCase`, `snake_case`, `PascalCase`, `CONSTANT_CASE`, `kebab-case`, `dot.case`, `Title Case`, `path/case` | `camelCase` |
 | `config` | CLI only | Path to custom YAML configuration file | `pubspec.yaml` |
 | `--quiet`, `-q` | CLI only | Quiet mode - show only errors (useful for CI/CD) | - |
 | `--verbose`, `-v` | CLI only | Verbose mode - show debug information (useful for troubleshooting) | - |
@@ -214,7 +216,7 @@ lib/l10n/
 }
 ```
 
-**Note**: Translation keys are automatically converted to camelCase for consistency with Dart naming conventions.
+**Note**: Translation keys are converted to camelCase by default. Set `naming_convention: none` to keep keys as-is, or choose any other supported convention.
 
 ## Key Features Explained
 

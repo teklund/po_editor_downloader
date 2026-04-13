@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:po_editor_downloader/src/language.dart';
 import 'package:po_editor_downloader/src/logger.dart';
+import 'package:po_editor_downloader/src/naming_convention.dart';
 import 'package:po_editor_downloader/src/po_editor_config.dart';
 import 'package:po_editor_downloader/src/po_editor_service.dart';
 import 'package:po_editor_downloader/src/re_case.dart';
@@ -21,7 +22,7 @@ const defaultFilenamePattern = 'app_{locale}.arb';
 /// from POEditor, including:
 /// - Fetching available languages
 /// - Downloading translations for each language
-/// - Converting term keys to camelCase
+/// - Converting term keys to the configured naming convention
 /// - Writing ARB files with proper formatting
 /// - Managing HTTP client lifecycle
 class TranslationDownloader {
@@ -55,6 +56,22 @@ class TranslationDownloader {
 
     logger.debug('Ensuring output directory exists: $filesPath');
     await _ensureOutputDirectory(filesPath);
+
+    final convention = config.namingConvention ?? NamingConvention.camelCase;
+    if (convention == NamingConvention.none) {
+      logger.info(
+        'Naming convention set to "none" — keys are used as-is from POEditor. '
+        'Ensure all keys are valid Dart identifiers if using Flutter gen-l10n or slang '
+        '(no hyphens, dots, spaces, slashes, or leading digits).',
+      );
+    } else if (!convention.isDartCompatible) {
+      logger.warning(
+        'Naming convention "${convention.name}" produces keys that are not '
+        'valid Dart identifiers. This may cause issues with Flutter gen-l10n '
+        'or slang. Compatible conventions: camelCase, snake_case, PascalCase, '
+        'CONSTANT_CASE.',
+      );
+    }
 
     final client = _client ?? http.Client();
     final ownsClient = _client == null;
@@ -92,11 +109,22 @@ class TranslationDownloader {
           },
         ).then(
           (value) {
-            return value.map(
-              (key, value) {
-                return MapEntry(ReCase(key).toCamelCase(), value);
-              },
-            );
+            final result = <String, dynamic>{};
+            for (final entry in value.entries) {
+              final key = entry.key;
+              if (key.startsWith('@@')) {
+                // Global ARB metadata (@@locale, @@updated, etc.) — keep as-is
+                result[key] = entry.value;
+              } else if (key.startsWith('@')) {
+                // Per-key metadata (@keyName) — convert the base key and re-prefix
+                final baseKey = key.substring(1);
+                final convertedKey = ReCase(baseKey).convertTo(convention);
+                result['@$convertedKey'] = entry.value;
+              } else {
+                result[ReCase(key).convertTo(convention)] = entry.value;
+              }
+            }
+            return result;
           },
         );
 

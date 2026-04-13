@@ -11,6 +11,7 @@ const filtersOption = 'filters';
 const filesPathOption = 'files_path';
 const filenamePatternOption = 'filename_pattern';
 const addMetadataOption = 'add_metadata';
+const namingConventionOption = 'naming_convention';
 
 /// Load configuration from multiple sources with priority:
 /// 1. Command-line arguments (highest)
@@ -54,6 +55,12 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
       addMetadataOption,
       mandatory: false,
       help: 'Include metadata in ARB files (true/false)',
+    )
+    ..addOption(
+      namingConventionOption,
+      mandatory: false,
+      help:
+          'Naming convention for keys: camelCase (default), snake_case, PascalCase, CONSTANT_CASE, kebab-case, dot.case, Title Case, path/case',
     )
     ..addOption(
       'config',
@@ -101,8 +108,9 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     print('    filters: "translated"');
     print('    files_path: "lib/l10n/"');
     print('    filename_pattern: "app_{locale}.arb"  # Default');
-    print('    add_metadata: true\n');
-    print('Filename Patterns:');
+    print('    add_metadata: true');
+    print('    naming_convention: camelCase  # Default');
+    print('\nFilename Patterns:');
     print('  Use {locale} as placeholder for the language code');
     print('  Examples:');
     print('    "app_{locale}.arb"        -> app_en.arb, app_es.arb');
@@ -133,6 +141,7 @@ Future<PoEditorConfig> loadConfiguration(List<String> arguments) async {
     'files_path': result[filesPathOption],
     'filename_pattern': result[filenamePatternOption],
     'add_metadata': result[addMetadataOption],
+    'naming_convention': result[namingConventionOption],
   });
 
   // 2. Read from environment variables

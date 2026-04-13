@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:po_editor_downloader/src/naming_convention.dart';
+
 /// Configuration model for POEditor downloader
 ///
 /// This class holds all configuration values that can be sourced from:
@@ -32,6 +34,9 @@ class PoEditorConfig {
   /// Whether to include metadata in ARB files
   final bool? addMetadata;
 
+  /// Naming convention for translation keys (e.g., camelCase, snake_case)
+  final NamingConvention? namingConvention;
+
   /// Create a configuration instance
   const PoEditorConfig({
     this.apiToken,
@@ -41,6 +46,7 @@ class PoEditorConfig {
     this.filesPath,
     this.filenamePattern,
     this.addMetadata,
+    this.namingConvention,
   });
 
   /// Create configuration from YAML map
@@ -66,6 +72,7 @@ class PoEditorConfig {
       filesPath: yaml['files_path']?.toString(),
       filenamePattern: yaml['filename_pattern']?.toString(),
       addMetadata: _parseBool(yaml['add_metadata']),
+      namingConvention: _parseNamingConvention(yaml['naming_convention']),
     );
   }
 
@@ -79,6 +86,7 @@ class PoEditorConfig {
       filesPath: args['files_path'],
       filenamePattern: args['filename_pattern'],
       addMetadata: _parseBool(args['add_metadata']),
+      namingConvention: _parseNamingConvention(args['naming_convention']),
     );
   }
 
@@ -113,6 +121,9 @@ class PoEditorConfig {
           tertiary?.filenamePattern,
       addMetadata:
           primary.addMetadata ?? secondary.addMetadata ?? tertiary?.addMetadata,
+      namingConvention: primary.namingConvention ??
+          secondary.namingConvention ??
+          tertiary?.namingConvention,
     );
   }
 
@@ -152,6 +163,7 @@ class PoEditorConfig {
     String? filesPath,
     String? filenamePattern,
     bool? addMetadata,
+    NamingConvention? namingConvention,
   }) {
     return PoEditorConfig(
       apiToken: apiToken ?? this.apiToken,
@@ -161,6 +173,7 @@ class PoEditorConfig {
       filesPath: filesPath ?? this.filesPath,
       filenamePattern: filenamePattern ?? this.filenamePattern,
       addMetadata: addMetadata ?? this.addMetadata,
+      namingConvention: namingConvention ?? this.namingConvention,
     );
   }
 
@@ -173,7 +186,8 @@ class PoEditorConfig {
         'filters: $filters, '
         'filesPath: $filesPath, '
         'filenamePattern: $filenamePattern, '
-        'addMetadata: $addMetadata)';
+        'addMetadata: $addMetadata, '
+        'namingConvention: $namingConvention)';
   }
 
   /// Parse a boolean value from various input types
@@ -192,6 +206,58 @@ class PoEditorConfig {
       if (lower == 'false') return false;
     }
     return null;
+  }
+
+  /// Parse a [NamingConvention] from a dynamic value.
+  ///
+  /// Accepts the convention name as a string, matching the enum value names
+  /// or common aliases:
+  /// - `camelCase`, `camel_case`, `camel`
+  /// - `pascalCase`, `pascal_case`, `pascal`
+  /// - `snakeCase`, `snake_case`, `snake`
+  /// - `constantCase`, `constant_case`, `constant`, `screaming_snake`
+  /// - `kebabCase`, `kebab_case`, `kebab`, `dash`
+  /// - `dotCase`, `dot_case`, `dot`
+  /// - `titleCase`, `title_case`, `title`
+  /// - `pathCase`, `path_case`, `path`
+  ///
+  /// Returns `null` for unrecognized or null values.
+  static NamingConvention? _parseNamingConvention(dynamic value) {
+    if (value == null) return null;
+    if (value is! String) return null;
+    // Strip all separators, spaces and lowercase — so "dot.case", "dot_case",
+    // "dot case" and "dotCase" all normalise to "dotcase".
+    final normalized = value.toLowerCase().replaceAll(RegExp(r'[\s\-_./]'), '');
+
+    // First: match directly against enum names (e.g. "camelCase" → "camelcase").
+    // This means any future enum values are automatically supported.
+    for (final convention in NamingConvention.values) {
+      if (convention.name.toLowerCase() == normalized) return convention;
+    }
+
+    // Second: explicit aliases for common alternative names not covered above.
+    switch (normalized) {
+      case 'off' || 'raw' || 'preserve':
+        return NamingConvention.none;
+      case 'camel':
+        return NamingConvention.camelCase;
+      case 'pascal':
+        return NamingConvention.pascalCase;
+      case 'snake':
+        return NamingConvention.snakeCase;
+      case 'constant' || 'screamingsnake':
+        return NamingConvention.constantCase;
+      case 'kebab' || 'dash':
+        return NamingConvention.kebabCase;
+      case 'dot':
+        return NamingConvention.dotCase;
+      case 'title':
+        return NamingConvention.titleCase;
+      case 'path':
+        return NamingConvention.pathCase;
+      default:
+        return null;
+    }
   }
 }
 

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.0
+
+- feat: add configurable naming convention for translation keys (`naming_convention` option)
+- feat: add `none` convention to preserve POEditor keys as-is
+- feat: improve word splitting with acronym support (e.g., `HTMLParser` → `htmlParser`)
+- feat: add digit-to-uppercase word boundary detection (e.g., `error404NotFound`)
+- fix: preserve ARB `@key` metadata entries and `@@` global metadata during key conversion
+
 ## 1.0.2
 
 - fix: resolve 10-second hang after CLI execution by properly closing HTTP client connections

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
@@ -231,6 +232,136 @@ void main() {
       expect(content, contains('simple'));
       expect(content, isNot(contains('hello_world')));
       expect(content, isNot(contains('goodbye_message')));
+    });
+
+    test('should convert keys to configured naming convention', () async {
+      // All inputs are camelCase — none match snake_case already.
+      // If conversion is skipped entirely, every assertion below will fail.
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"helloWorld": "Hello", "goodbyeMessage": "Bye", "errorNotFound": "Error"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.snakeCase,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello_world'));
+      expect(content, contains('goodbye_message'));
+      expect(content, contains('error_not_found'));
+      expect(content, isNot(contains('"helloWorld"')));
+      expect(content, isNot(contains('"goodbyeMessage"')));
+      expect(content, isNot(contains('"errorNotFound"')));
+    });
+
+    test('should convert keys to kebab-case when configured', () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"hello_world": "Hello", "goodbye_message": "Bye"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.kebabCase,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello-world'));
+      expect(content, contains('goodbye-message'));
+    });
+
+    test('should preserve keys as-is when convention is none', () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"hello_world": "Hello", "MY_CONSTANT_KEY": "Value"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.none,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.normal),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello_world'));
+      expect(content, contains('MY_CONSTANT_KEY'));
+      expect(content, isNot(contains('helloWorld')));
+    });
+
+    test('should preserve @-prefixed ARB metadata and convert base key',
+        () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse: '{'
+            '"error_bank_id_start_failed": "Failed",'
+            '"@error_bank_id_start_failed": {"description": "Error message", "type": "text"},'
+            '"@@locale": "en"'
+            '}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+      final arb = jsonDecode(content) as Map<String, dynamic>;
+
+      // Translation key should be converted
+      expect(arb.containsKey('errorBankIdStartFailed'), isTrue);
+      // @metadata key should be converted with @ prefix preserved
+      expect(arb.containsKey('@errorBankIdStartFailed'), isTrue);
+      // @@ global metadata should be preserved as-is
+      expect(arb.containsKey('@@locale'), isTrue);
+      // Original unconverted keys should not exist
+      expect(arb.containsKey('error_bank_id_start_failed'), isFalse);
+      expect(arb.containsKey('@error_bank_id_start_failed'), isFalse);
     });
 
     test('should throw PoEditorApiException on API error', () async {
