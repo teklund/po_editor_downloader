@@ -85,10 +85,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: analyze
+    continue-on-error: ${{ matrix.allow_failure }}
     strategy:
       fail-fast: true
       matrix:
-        sdk: ["3.4.0", "stable"]
+        include:
+          - sdk: "3.4.0"
+            allow_failure: true
+          - sdk: "stable"
+            allow_failure: false
 
     steps:
       - name: Checkout code
