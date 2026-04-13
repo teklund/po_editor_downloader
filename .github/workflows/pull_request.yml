@@ -50,7 +50,11 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        sdk: ["3.4.0", "stable"]
+        include:
+          - sdk: "3.4.0"
+            allow_failure: true
+          - sdk: "stable"
+            allow_failure: false
 
     steps:
       - name: Checkout code
@@ -73,8 +77,8 @@ jobs:
         run: dart pub get
 
       - name: Analyze project
-        run: dart analyze --fatal-infos --fatal-warnings
-        continue-on-error: ${{ matrix.sdk == '3.4.0' }}
+        run: dart analyze --fatal-infos
+        continue-on-error: ${{ matrix.allow_failure }}
 
   test:
     name: Run Tests (${{ matrix.sdk }})

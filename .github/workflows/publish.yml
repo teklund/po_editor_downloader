@@ -26,7 +26,7 @@ jobs:
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/v}"
           # Strip 'version:' prefix, quotes, and inline comments — handles version: "1.0.0" and version: 1.0.0
-          PUBSPEC_VERSION=$(grep '^version:' pubspec.yaml | sed "s/^version:[[:space:]]*//" | sed "s/['\"]//g" | sed "s/[[:space:]#].*//" | head -n 1)
+          PUBSPEC_VERSION=$(grep '^[[:space:]]*version:' pubspec.yaml | sed 's/^[[:space:]]*version:[[:space:]]*//' | sed "s/['\"]//g" | sed 's/[[:space:]#].*//' | head -n 1)
           if [ -z "$PUBSPEC_VERSION" ]; then
             echo "❌ Could not determine version from pubspec.yaml"
             exit 1
@@ -35,7 +35,7 @@ jobs:
             echo "❌ Version mismatch! Tag: $TAG_VERSION, pubspec.yaml: $PUBSPEC_VERSION"
             exit 1
           fi
-          echo "✅ Version matches: $TAG_VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Version matches: $TAG_VERSION" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run tests
         run: dart test
