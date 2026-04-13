@@ -3,7 +3,7 @@ name: Publish to pub.dev
 on:
   push:
     tags:
-      - "v[0-9]+.[0-9]+.[0-9]+*" # Matches v1.0.0, v1.0.0-beta.1, etc.
+      - "v*" # Matches v1.0.0, v1.0.0-beta.1, etc.; exact version is validated below
 
 jobs:
   verify:
