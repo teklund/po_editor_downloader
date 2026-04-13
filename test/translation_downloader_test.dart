@@ -292,6 +292,35 @@ void main() {
       expect(content, contains('goodbye-message'));
     });
 
+    test('should preserve keys as-is when convention is none', () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"hello_world": "Hello", "MY_CONSTANT_KEY": "Value"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.none,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.normal),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello_world'));
+      expect(content, contains('MY_CONSTANT_KEY'));
+      expect(content, isNot(contains('helloWorld')));
+    });
+
     test('should preserve @-prefixed ARB metadata and convert base key',
         () async {
       final mockClient = _createSuccessfulMockClient(
