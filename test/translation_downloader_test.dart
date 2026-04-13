@@ -235,9 +235,11 @@ void main() {
     });
 
     test('should convert keys to configured naming convention', () async {
+      // All inputs are camelCase — none match snake_case already.
+      // If conversion is skipped entirely, every assertion below will fail.
       final mockClient = _createSuccessfulMockClient(
         translationResponse:
-            '{"hello_world": "Hello", "goodbye_message": "Bye", "helloAgain": "Hi"}',
+            '{"helloWorld": "Hello", "goodbyeMessage": "Bye", "errorNotFound": "Error"}',
       );
 
       final config = PoEditorConfig(
@@ -260,10 +262,10 @@ void main() {
 
       expect(content, contains('hello_world'));
       expect(content, contains('goodbye_message'));
-      expect(content, contains('hello_again'));
-      expect(content, isNot(contains('"helloAgain"')));
-      expect(content, isNot(contains('helloWorld')));
-      expect(content, isNot(contains('goodbyeMessage')));
+      expect(content, contains('error_not_found'));
+      expect(content, isNot(contains('"helloWorld"')));
+      expect(content, isNot(contains('"goodbyeMessage"')));
+      expect(content, isNot(contains('"errorNotFound"')));
     });
 
     test('should convert keys to kebab-case when configured', () async {
