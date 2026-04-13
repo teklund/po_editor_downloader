@@ -332,12 +332,16 @@ void main() {
           'dash': NamingConvention.kebabCase,
           'dotCase': NamingConvention.dotCase,
           'dot_case': NamingConvention.dotCase,
+          'dot.case': NamingConvention.dotCase,
           'dot': NamingConvention.dotCase,
           'titleCase': NamingConvention.titleCase,
           'title_case': NamingConvention.titleCase,
+          'Title Case': NamingConvention.titleCase,
+          'title case': NamingConvention.titleCase,
           'title': NamingConvention.titleCase,
           'pathCase': NamingConvention.pathCase,
           'path_case': NamingConvention.pathCase,
+          'path/case': NamingConvention.pathCase,
           'path': NamingConvention.pathCase,
         };
 

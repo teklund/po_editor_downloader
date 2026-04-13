@@ -237,7 +237,7 @@ void main() {
     test('should convert keys to configured naming convention', () async {
       final mockClient = _createSuccessfulMockClient(
         translationResponse:
-            '{"hello_world": "Hello", "goodbye_message": "Bye"}',
+            '{"hello_world": "Hello", "goodbye_message": "Bye", "helloAgain": "Hi"}',
       );
 
       final config = PoEditorConfig(
@@ -260,6 +260,8 @@ void main() {
 
       expect(content, contains('hello_world'));
       expect(content, contains('goodbye_message'));
+      expect(content, contains('hello_again'));
+      expect(content, isNot(contains('"helloAgain"')));
       expect(content, isNot(contains('helloWorld')));
       expect(content, isNot(contains('goodbyeMessage')));
     });
