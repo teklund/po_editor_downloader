@@ -34,11 +34,6 @@ class ReCase {
       final nextChar = i + 1 == text.length ? null : text[i + 1];
 
       if (!_alphanumericRegex.hasMatch(char)) {
-        // Non-alphanumeric character acts as a word boundary
-        if (sb.isNotEmpty) {
-          words.add(sb.toString());
-          sb.clear();
-        }
         continue;
       }
 
