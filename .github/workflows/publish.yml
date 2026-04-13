@@ -1,0 +1,82 @@
+name: Publish to pub.dev
+
+on:
+  push:
+    tags:
+      - "v*" # Matches v1.0.0, v1.0.0-beta.1, etc.; tag/pubspec version consistency validated in verify job
+
+permissions:
+  contents: read # Default: restrict token to read-only; jobs override as needed
+
+jobs:
+  verify:
+    name: Verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Verify version matches tag
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          # Strip 'version:' prefix, quotes, and inline comments — handles version: "1.0.0" and version: 1.0.0
+          PUBSPEC_VERSION=$(grep '^[[:space:]]*version:' pubspec.yaml | sed 's/^[[:space:]]*version:[[:space:]]*//' | sed "s/['\"]//g" | sed 's/[[:space:]#].*//' | head -n 1)
+          if [ -z "$PUBSPEC_VERSION" ]; then
+            echo "❌ Could not determine version from pubspec.yaml"
+            exit 1
+          fi
+          if [ "$TAG_VERSION" != "$PUBSPEC_VERSION" ]; then
+            echo "❌ Version mismatch! Tag: $TAG_VERSION, pubspec.yaml: $PUBSPEC_VERSION"
+            exit 1
+          fi
+          echo "✅ Version matches: $TAG_VERSION" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run tests
+        run: dart test
+
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+      - name: Check formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Run pana
+        run: |
+          dart pub global activate pana
+          dart pub global run pana --no-warning --exit-code-threshold 0
+
+      - name: Dry run publish
+        run: dart pub publish --dry-run
+
+  publish:
+    name: Publish to pub.dev
+    needs: verify
+    permissions:
+      id-token: write # Required for OIDC authentication with pub.dev
+      contents: read # Required for the reusable workflow to read repository contents
+    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
+    with:
+      environment: pub.dev # Requires a matching GitHub Actions environment for approval gating
+
+  release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref, '-') }}
