@@ -3,7 +3,7 @@ name: Publish to pub.dev
 on:
   push:
     tags:
-      - "v*" # Matches v1.0.0, v1.0.0-beta.1, etc.; exact version is validated below
+      - "v*" # Matches v1.0.0, v1.0.0-beta.1, etc.; tag/pubspec version consistency validated in verify job
 
 jobs:
   verify:

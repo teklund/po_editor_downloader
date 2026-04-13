@@ -47,6 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: format
+    continue-on-error: ${{ matrix.allow_failure }}
     strategy:
       fail-fast: true
       matrix:
@@ -78,7 +79,6 @@ jobs:
 
       - name: Analyze project
         run: dart analyze --fatal-infos
-        continue-on-error: ${{ matrix.allow_failure }}
 
   test:
     name: Run Tests (${{ matrix.sdk }})
