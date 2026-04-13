@@ -2,9 +2,9 @@ name: Pull Request
 
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   push:
-    branches: [ main, master ]
+    branches: [main, master]
 
 permissions:
   contents: read
@@ -22,12 +22,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -35,10 +35,10 @@ jobs:
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Verify formatting
         run: dart format --output=none --set-exit-if-changed .
 
@@ -50,8 +50,8 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        sdk: ['3.4.0', 'stable']
-    
+        sdk: ["3.4.0", "stable"]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -59,7 +59,7 @@ jobs:
         uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ matrix.sdk }}
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -68,16 +68,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.sdk }}-pub-
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Analyze project
-        uses: invertase/github-action-dart-analyzer@v3
-        with:
-          fatal-infos: true
-          fatal-warnings: true
-          annotate-only: ${{ matrix.sdk != '3.4.0' }}
+        run: dart analyze --fatal-infos --fatal-warnings
+        continue-on-error: ${{ matrix.sdk == '3.4.0' }}
 
   test:
     name: Run Tests (${{ matrix.sdk }})
@@ -87,17 +84,17 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        sdk: ['3.4.0', 'stable']
-    
+        sdk: ["3.4.0", "stable"]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Dart ${{ matrix.sdk }}
         uses: dart-lang/setup-dart@v1
         with:
           sdk: ${{ matrix.sdk }}
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -106,28 +103,28 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ matrix.sdk }}-pub-
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Run tests
         run: dart test --reporter=github
-  
+
   coverage:
     name: Test Coverage
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: test
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -136,18 +133,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-stable-pub-
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Run tests with coverage
         run: dart test --coverage=coverage
-      
+
       - name: Install and format coverage
         run: |
           dart pub global activate coverage
           dart pub global run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib
-      
+
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v6
         with:
@@ -162,16 +159,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: analyze
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -179,10 +176,10 @@ jobs:
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Validate package
         run: dart pub publish --dry-run
 
@@ -191,16 +188,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     needs: analyze
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-      
+
       - name: Setup Dart
         uses: dart-lang/setup-dart@v1
         with:
           sdk: stable
-      
+
       - name: Cache Dart dependencies
         uses: actions/cache@v5
         with:
@@ -208,13 +205,13 @@ jobs:
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
-      
+
       - name: Install dependencies
         run: dart pub get
-      
+
       - name: Install pana
         run: dart pub global activate pana
-      
+
       - name: Run pana
         run: |
           dart pub global run pana --no-warning | tee pana-output.txt
