@@ -233,6 +233,64 @@ void main() {
       expect(content, isNot(contains('goodbye_message')));
     });
 
+    test('should convert keys to configured naming convention', () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"hello_world": "Hello", "goodbye_message": "Bye"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.snakeCase,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello_world'));
+      expect(content, contains('goodbye_message'));
+      expect(content, isNot(contains('helloWorld')));
+      expect(content, isNot(contains('goodbyeMessage')));
+    });
+
+    test('should convert keys to kebab-case when configured', () async {
+      final mockClient = _createSuccessfulMockClient(
+        translationResponse:
+            '{"hello_world": "Hello", "goodbye_message": "Bye"}',
+      );
+
+      final config = PoEditorConfig(
+        apiToken: _testApiToken,
+        projectId: _testProjectId,
+        filesPath: outputPath,
+        namingConvention: NamingConvention.kebabCase,
+      );
+
+      final downloader = TranslationDownloader(
+        config: config,
+        logger: const Logger(LogLevel.quiet),
+        client: mockClient,
+      );
+
+      await downloader.downloadTranslations();
+
+      final arbFile = File('$outputPath/app_en.arb');
+      final content = await arbFile.readAsString();
+
+      expect(content, contains('hello-world'));
+      expect(content, contains('goodbye-message'));
+    });
+
     test('should throw PoEditorApiException on API error', () async {
       final mockClient = MockClient((request) async {
         return http.Response('{"error": "Invalid API token"}', 401);

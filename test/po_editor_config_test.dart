@@ -263,6 +263,128 @@ void main() {
         expect(string, contains('project1'));
       });
     });
+
+    group('namingConvention', () {
+      test('should parse naming_convention from YAML', () {
+        final yaml = {
+          'project_id': '12345',
+          'naming_convention': 'snake_case',
+        };
+
+        final config = PoEditorConfig.fromYaml(yaml);
+
+        expect(config.namingConvention, NamingConvention.snakeCase);
+        expect(config.projectId, '12345');
+      });
+
+      test('should parse naming_convention from CLI', () {
+        final args = {
+          'api_token': 'token',
+          'project_id': '123',
+          'naming_convention': 'kebab-case',
+        };
+
+        final config = PoEditorConfig.fromCommandLine(args);
+
+        expect(config.namingConvention, NamingConvention.kebabCase);
+      });
+
+      test('should return null for unrecognized convention', () {
+        final yaml = {
+          'naming_convention': 'unknown_case',
+        };
+
+        final config = PoEditorConfig.fromYaml(yaml);
+
+        expect(config.namingConvention, isNull);
+      });
+
+      test('should return null for null convention', () {
+        final yaml = <String, dynamic>{};
+
+        final config = PoEditorConfig.fromYaml(yaml);
+
+        expect(config.namingConvention, isNull);
+      });
+
+      test('should parse all convention aliases', () {
+        final aliases = {
+          'camelCase': NamingConvention.camelCase,
+          'camel_case': NamingConvention.camelCase,
+          'camel': NamingConvention.camelCase,
+          'pascalCase': NamingConvention.pascalCase,
+          'pascal_case': NamingConvention.pascalCase,
+          'pascal': NamingConvention.pascalCase,
+          'snakeCase': NamingConvention.snakeCase,
+          'snake_case': NamingConvention.snakeCase,
+          'snake': NamingConvention.snakeCase,
+          'constantCase': NamingConvention.constantCase,
+          'constant_case': NamingConvention.constantCase,
+          'constant': NamingConvention.constantCase,
+          'screaming_snake': NamingConvention.constantCase,
+          'kebabCase': NamingConvention.kebabCase,
+          'kebab_case': NamingConvention.kebabCase,
+          'kebab': NamingConvention.kebabCase,
+          'dash': NamingConvention.kebabCase,
+          'dotCase': NamingConvention.dotCase,
+          'dot_case': NamingConvention.dotCase,
+          'dot': NamingConvention.dotCase,
+          'titleCase': NamingConvention.titleCase,
+          'title_case': NamingConvention.titleCase,
+          'title': NamingConvention.titleCase,
+          'pathCase': NamingConvention.pathCase,
+          'path_case': NamingConvention.pathCase,
+          'path': NamingConvention.pathCase,
+        };
+
+        for (final entry in aliases.entries) {
+          final config =
+              PoEditorConfig.fromYaml({'naming_convention': entry.key});
+          expect(config.namingConvention, entry.value,
+              reason: 'Alias "${entry.key}" should parse to ${entry.value}');
+        }
+      });
+
+      test('should merge with correct priority', () {
+        final primary = PoEditorConfig(
+          apiToken: 'token',
+          namingConvention: NamingConvention.snakeCase,
+        );
+        final secondary = PoEditorConfig(
+          projectId: '123',
+          namingConvention: NamingConvention.kebabCase,
+        );
+
+        final merged = PoEditorConfig.merge(primary, secondary);
+
+        expect(merged.namingConvention, NamingConvention.snakeCase);
+      });
+
+      test('should fall back in merge when primary is null', () {
+        final primary = PoEditorConfig(apiToken: 'token');
+        final secondary = PoEditorConfig(
+          projectId: '123',
+          namingConvention: NamingConvention.pascalCase,
+        );
+
+        final merged = PoEditorConfig.merge(primary, secondary);
+
+        expect(merged.namingConvention, NamingConvention.pascalCase);
+      });
+
+      test('should copy with new namingConvention', () {
+        final config = PoEditorConfig(
+          apiToken: 'token',
+          namingConvention: NamingConvention.camelCase,
+        );
+
+        final copy =
+            config.copyWith(namingConvention: NamingConvention.snakeCase);
+
+        expect(copy.namingConvention, NamingConvention.snakeCase);
+        expect(copy.apiToken, 'token');
+      });
+    });
   });
 
   group('ConfigReader', () {

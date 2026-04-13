@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:po_editor_downloader/src/language.dart';
 import 'package:po_editor_downloader/src/logger.dart';
+import 'package:po_editor_downloader/src/naming_convention.dart';
 import 'package:po_editor_downloader/src/po_editor_config.dart';
 import 'package:po_editor_downloader/src/po_editor_service.dart';
 import 'package:po_editor_downloader/src/re_case.dart';
@@ -56,6 +57,16 @@ class TranslationDownloader {
     logger.debug('Ensuring output directory exists: $filesPath');
     await _ensureOutputDirectory(filesPath);
 
+    final convention = config.namingConvention ?? NamingConvention.camelCase;
+    if (!convention.isDartCompatible) {
+      logger.warning(
+        'Naming convention "${convention.name}" produces keys that are not '
+        'valid Dart identifiers. This may cause issues with Flutter gen-l10n '
+        'or slang. Compatible conventions: camelCase, snake_case, PascalCase, '
+        'CONSTANT_CASE.',
+      );
+    }
+
     final client = _client ?? http.Client();
     final ownsClient = _client == null;
     try {
@@ -94,7 +105,7 @@ class TranslationDownloader {
           (value) {
             return value.map(
               (key, value) {
-                return MapEntry(ReCase(key).toCamelCase(), value);
+                return MapEntry(ReCase(key).convertTo(convention), value);
               },
             );
           },
