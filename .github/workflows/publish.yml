@@ -5,6 +5,9 @@ on:
     tags:
       - "v*" # Matches v1.0.0, v1.0.0-beta.1, etc.; tag/pubspec version consistency validated in verify job
 
+permissions:
+  contents: read # Default: restrict token to read-only; jobs override as needed
+
 jobs:
   verify:
     name: Verify
@@ -12,8 +15,6 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0 # Required for release note generation
 
       - uses: dart-lang/setup-dart@v1
         with:
