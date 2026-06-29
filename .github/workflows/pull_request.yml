@@ -29,7 +29,7 @@ jobs:
           sdk: stable
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -66,7 +66,7 @@ jobs:
           sdk: ${{ matrix.sdk }}
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-${{ matrix.sdk }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -105,7 +105,7 @@ jobs:
           sdk: ${{ matrix.sdk }}
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-${{ matrix.sdk }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -135,7 +135,7 @@ jobs:
           sdk: stable
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-stable-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -179,7 +179,7 @@ jobs:
           sdk: stable
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
@@ -208,7 +208,7 @@ jobs:
           sdk: stable
 
       - name: Cache Dart dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
